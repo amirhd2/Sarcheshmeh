@@ -1,1 +1,0 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/db/defaults.ts","./src/db/init.ts","./src/db/schema.ts","./src/db/seed.ts","./src/lib/format.ts","./src/lib/jalali.ts"],"version":"5.9.3"}
