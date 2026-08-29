@@ -1,0 +1,47 @@
+/* =========================================================================
+   سرچشمه — Fonts
+   =========================================================================
+   Body: Vazirmatn (Persian + Latin).
+   Digits: separate "Digi" family declared with `unicode-range` so that
+   ONLY Persian (U+06F0..06F9) and ASCII (U+0030..0039) digits render in
+   the digit font. Tomorrow when the user sends a digit font, we only
+   need to point `src:` at it — no other code changes.
+
+   PRD §5 typography:
+   - body = Vazirmatn
+   - digits = slot ready (today: falls back to Vazirmatn)
+   - tabular-nums on numeric columns for aligned columns
+   - inputs ≥16px to prevent iOS auto-zoom
+   ========================================================================= */
+
+/* --- Vazirmatn (Persian + Latin body) ---
+   Loaded from Google Fonts CDN for now; can be self-hosted later
+   by dropping woff2 into /public/fonts and replacing the @font-face. */
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
+
+/* --- Digi — digit-only font slot ---
+   The slot is READY but intentionally empty (no `src`).
+   Tailwind's `font-digits` class will fall back through the stack
+   to Vazirmatn. When the user provides a digit font, drop the file
+   in /public/fonts/ and uncomment + set `src` below — 5-minute job.
+
+   Unicode ranges captured:
+   - U+06F0..U+06F9  Persian-Indic digits (۰۱۲۳۴۵۶۷۸۹)
+   - U+0030..U+0039  ASCII digits        (0123456789)
+   - U+066B          Arabic decimal separator (٫)
+   - U+002C          ASCII comma (,)
+   - U+002E          ASCII period (.)
+   - U+066C          Arabic thousands separator (٬)
+*/
+@font-face {
+  font-family: 'Digi';
+  /* src: url('/fonts/digits.woff2') format('woff2'); */
+  unicode-range:
+    U+06F0-06F9,
+    U+0030-0039,
+    U+066B,
+    U+066C,
+    U+002C,
+    U+002E;
+  font-display: swap;
+}
