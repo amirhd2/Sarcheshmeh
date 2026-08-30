@@ -1,19 +1,15 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — Dashboard (Phase 1 · Step 4)
+   سرچشمه — Dashboard (Phase 1 · Step 4 + 5)
    =========================================================================
    The root page of the app. Shows:
    - Header: app name + year switcher chip + settings icon
    - Year total card with count-up animation
    - 2×2 grid of season cards (1 column on mobile)
-   - FAB (bottom-left for RTL)
+   - FAB (bottom-left for RTL) → opens transaction form bottom sheet
 
-   Phase 1 step 5 will wire the FAB to the transaction form bottom sheet.
-   Phase 1 step 6 will wire season card taps to the season page.
-   For now, taps are no-ops (with a toast placeholder).
-
-   PRD §6 page 1 (Dashboard).
+   PRD §6 page 1 (Dashboard) + §6 page 2 (Transaction Form).
    ========================================================================= */
 
 import { useMemo, useState } from 'react';
@@ -22,9 +18,11 @@ import { YearSwitcher } from '@/components/dashboard/YearSwitcher';
 import { SeasonCard } from '@/components/dashboard/SeasonCard';
 import { CountUp } from '@/components/dashboard/CountUp';
 import { Fab } from '@/components/dashboard/Fab';
+import { BottomSheet } from '@/components/BottomSheet';
+import { TransactionForm } from '@/features/transaction-form/TransactionForm';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
-import { formatToman, formatCompact } from '@lib/format';
+import { formatToman } from '@lib/format';
 import { todayJalaliParts, type Season } from '@lib/jalali';
 
 const SEASONS: ReadonlyArray<Season> = ['spring', 'summer', 'autumn', 'winter'];
@@ -40,6 +38,9 @@ export default function HomePage() {
   // Once years load, default to the most recent year present
   const effectiveYear = selectedYear ?? currentYear ?? fallbackYear;
   const { summary, isLoading: summaryLoading } = useYearSummary(effectiveYear);
+
+  // FAB / bottom sheet state
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   // Show loading screen until DB is ready
   if (!ready || yearsLoading) {
@@ -78,7 +79,6 @@ export default function HomePage() {
               digits={digits}
               onClick={() => {
                 // Phase 1 step 6: navigate to season page
-                // For now, just a no-op
               }}
             />
           ))}
@@ -86,11 +86,25 @@ export default function HomePage() {
 
         {/* Hint that dashboard is interactive */}
         <p className="text-center text-xs text-text-faint pt-2">
-          مرحله ۴ — داشبورد آماده‌ست. فاز بعدی: فرم ثبت تراکنش.
+          مرحله ۵ — فرم ثبت تراکنش آماده‌ست. دکمه‌ی + رو بزن.
         </p>
       </div>
 
-      <Fab onAdd={() => { /* Phase 1 step 5 */ }} />
+      <Fab
+        onAdd={() => setSheetOpen(true)}
+        isOpen={sheetOpen}
+      />
+
+      <BottomSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title="تراکنش جدید"
+      >
+        <TransactionForm
+          dashboardYear={effectiveYear}
+          onSubmit={() => setSheetOpen(false)}
+        />
+      </BottomSheet>
     </main>
   );
 }

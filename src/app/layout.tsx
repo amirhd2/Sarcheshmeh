@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Vazirmatn } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { AppSettingsProvider } from '@/features/dashboard/AppSettingsContext';
 import './globals.css';
 
@@ -57,6 +58,7 @@ export default function RootLayout({
         <AppSettingsProvider>
           {children}
           <Toaster />
+          <SonnerToaster position="top-center" />
         </AppSettingsProvider>
       </body>
     </html>
