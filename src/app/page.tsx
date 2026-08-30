@@ -58,7 +58,13 @@ export default function HomePage() {
         digits={digits}
       />
 
-      <div className="px-4 space-y-4 max-w-2xl mx-auto">
+      {/* Content container — responsive max-width:
+          - mobile: full width (max-w-2xl = 672px covers most phones)
+          - tablet (md+): max-w-4xl (896px) — uses more of the screen
+          - desktop (lg+): max-w-5xl (1024px) — fills wide screens
+          PRD user feedback: previously max-w-2xl on all sizes left
+          too much empty space on tablets/desktops. */}
+      <div className="px-4 space-y-4 max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto">
         {/* Year total card with count-up */}
         <YearTotalCard
           totalAmount={summary.totalAmount}
@@ -67,8 +73,13 @@ export default function HomePage() {
           digits={digits}
         />
 
-        {/* Season cards grid — 1 col mobile, 2 cols sm+ */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Season cards grid — responsive columns per PRD §6 + user feedback:
+            - mobile: 1 column (stacked)
+            - sm (640px+): 2 columns (2×2 grid) — PRD spec
+            - lg (1024px+): 4 columns (1×4 row) — uses desktop real estate
+              better than 2×2 which left cards too wide/stretched.
+            Cards also scale up padding/font on larger screens. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
           {SEASONS.map((season) => (
             <SeasonCard
               key={season}
@@ -124,7 +135,7 @@ function DashboardHeader({
 }) {
   return (
     <header
-      className="sticky top-0 z-30 px-4 py-3 max-w-2xl mx-auto w-full flex items-center justify-between"
+      className="sticky top-0 z-30 px-4 py-3 max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto w-full flex items-center justify-between"
       style={{
         background: 'rgb(var(--bg) / 0.85)',
         backdropFilter: 'blur(12px)',
@@ -178,23 +189,23 @@ function YearTotalCard({
   digits: 'fa' | 'en';
 }) {
   return (
-    <section className="card p-5">
+    <section className="card p-5 md:p-7 lg:p-8">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-text-muted">جمع درآمد سال</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs md:text-sm text-text-muted">جمع درآمد سال</p>
           {isLoading ? (
-            <div className="mt-2 h-9 w-40 rounded-lg animate-pulse" style={{ background: 'rgb(var(--surface-2))' }} />
+            <div className="mt-2 h-9 md:h-12 w-40 md:w-56 rounded-lg animate-pulse" style={{ background: 'rgb(var(--surface-2))' }} />
           ) : (
             <CountUp value={totalAmount} duration={900}>
               {(current) => (
-                <div className="nums digits-font text-3xl font-bold text-text leading-tight mt-1">
+                <div className="nums digits-font text-3xl md:text-4xl lg:text-5xl font-bold text-text leading-tight mt-1 md:mt-2">
                   {formatToman(current, digits)}
                 </div>
               )}
             </CountUp>
           )}
-          <div className="mt-2 flex items-center gap-1.5">
-            <span className="text-xs text-text-muted">
+          <div className="mt-2 md:mt-3 flex items-center gap-1.5">
+            <span className="text-xs md:text-sm text-text-muted">
               <span className="nums digits-font font-medium text-text">
                 {digits === 'fa' ? faNum(totalCount) : totalCount}
               </span>{' '}
@@ -203,7 +214,7 @@ function YearTotalCard({
           </div>
         </div>
         <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center"
+          className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shrink-0"
           style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}
         >
           <DropIconLarge />

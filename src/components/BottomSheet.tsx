@@ -109,8 +109,17 @@ export function BottomSheet({
                 (unless dismiss threshold is met, which calls onClose).
               - dragElastic is asymmetric: 0 at top (no upward give),
                 0.4 at bottom (rubber-band when pulling down).
-              This combination ensures the sheet stays anchored to the
-              bottom of the screen at all times. PRD user feedback #3. */}
+
+              Width capping (PRD user feedback this iteration):
+              - On phones (< 480px wide), the sheet spans full width.
+              - On tablets/desktops (>= 480px), the sheet is capped at
+                480px and centered horizontally. This prevents the
+                number pad buttons from becoming absurdly wide (e.g.
+                ~200px each on a tablet landscape) and matches the
+                iOS sheet pattern on iPad.
+              - We use `left-1/2 -translate-x-1/2` for centering,
+                combined with `w-full max-w-[480px]` so on small
+                screens it still fills the width. */}
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -126,7 +135,7 @@ export function BottomSheet({
             dragElastic={{ top: 0, bottom: 0.4 }}
             dragMomentum={false}
             onDragEnd={handleDragEnd}
-            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col"
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 flex flex-col w-full max-w-[480px]"
             style={{
               maxHeight: `${maxHeightPct}vh`,
               background: 'rgb(var(--surface))',
@@ -134,10 +143,6 @@ export function BottomSheet({
               borderTopRightRadius: 28,
               boxShadow: '0 -8px 32px -8px rgba(0, 0, 0, 0.2)',
               paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-              // touch-action: none would block inner scroll, so we use
-              // pan-y to allow vertical scrolling inside the sheet while
-              // still letting framer-motion handle drag gestures on the
-              // handle/header area.
               touchAction: 'pan-y',
             }}
           >
