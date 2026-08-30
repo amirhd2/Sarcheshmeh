@@ -1,332 +1,243 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — Phase 1 · Steps 1–3 health check screen (Next.js)
+   سرچشمه — Dashboard (Phase 1 · Step 4)
    =========================================================================
-   Verifies:
-   - Tailwind tokens resolve (light/dark switch works)
-   - Dexie schema initializes cleanly
-   - Default categories & destinations seed correctly
-   - Sample transactions seed with the right shape & count (~80)
-   - Jalali conversion + Persian/English digit formatting work
-   - Digit font slot falls back to Vazirmatn without errors
+   The root page of the app. Shows:
+   - Header: app name + year switcher chip + settings icon
+   - Year total card with count-up animation
+   - 2×2 grid of season cards (1 column on mobile)
+   - FAB (bottom-left for RTL)
 
-   Phase 1 step 4 (dashboard) will replace this screen entirely.
+   Phase 1 step 5 will wire the FAB to the transaction form bottom sheet.
+   Phase 1 step 6 will wire season card taps to the season page.
+   For now, taps are no-ops (with a toast placeholder).
+
+   PRD §6 page 1 (Dashboard).
    ========================================================================= */
 
-import { useEffect, useMemo, useState } from 'react';
-import { db, type Settings, type ThemePref, type DigitPref } from '@/db/schema';
-import { initDatabase, updateSettings } from '@/db/init';
-import {
-  formatToman,
-  formatCompact,
-  groupDigits,
-  parseAmountInput,
-  formatPercent,
-} from '@lib/format';
-import {
-  formatJalaliLong,
-  formatJalaliShort,
-  formatJalaliMonthYear,
-  jalaliYear,
-  jalaliSeason,
-  SEASONS_FA,
-} from '@lib/jalali';
+import { useMemo, useState } from 'react';
+import { Settings as SettingsIcon } from 'lucide-react';
+import { YearSwitcher } from '@/components/dashboard/YearSwitcher';
+import { SeasonCard } from '@/components/dashboard/SeasonCard';
+import { CountUp } from '@/components/dashboard/CountUp';
+import { Fab } from '@/components/dashboard/Fab';
+import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
+import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
+import { formatToman, formatCompact } from '@lib/format';
+import { todayJalaliParts, type Season } from '@lib/jalali';
 
-interface BootResult {
-  ok: boolean;
-  error?: string;
-  settings?: Settings;
-  counts?: { transactions: number; categories: number; destinations: number };
-  sampleCount?: number;
-}
+const SEASONS: ReadonlyArray<Season> = ['spring', 'summer', 'autumn', 'winter'];
 
 export default function HomePage() {
-  const [boot, setBoot] = useState<BootResult>({ ok: false });
-  const [digits, setDigits] = useState<DigitPref>('fa');
-  const [theme, setTheme] = useState<ThemePref>('system');
+  const { ready, digits } = useAppSettings();
+  const { years, currentYear, isLoading: yearsLoading } = useAvailableYears();
 
-  /* ---- Boot DB on mount ---- */
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const settings = await initDatabase();
-        const [transactions, categories, destinations] = await Promise.all([
-          db.transactions.count(),
-          db.categories.count(),
-          db.destinations.count(),
-        ]);
-        const sampleCount = await db.transactions.where('isDemo').equals(1).count();
-        if (cancelled) return;
-        setBoot({
-          ok: true,
-          settings,
-          counts: { transactions, categories, destinations },
-          sampleCount,
-        });
-        setDigits(settings.digits);
-        setTheme(settings.theme);
-      } catch (e) {
-        if (cancelled) return;
-        setBoot({ ok: false, error: e instanceof Error ? e.message : String(e) });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Default to current jalali year if no data exists yet
+  const fallbackYear = useMemo(() => todayJalaliParts().jy, []);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
-  /* ---- Apply theme to <html class="dark"> + data-theme ---- */
-  useEffect(() => {
-    const root = document.documentElement;
-    const apply = (mode: 'light' | 'dark') => {
-      if (mode === 'dark') root.classList.add('dark');
-      else root.classList.remove('dark');
-      root.setAttribute('data-theme', mode);
-    };
-    if (theme === 'system') {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      apply(mq.matches ? 'dark' : 'light');
-      const onChange = (e: MediaQueryListEvent) => apply(e.matches ? 'dark' : 'light');
-      mq.addEventListener('change', onChange);
-      return () => mq.removeEventListener('change', onChange);
-    }
-    apply(theme);
-  }, [theme]);
+  // Once years load, default to the most recent year present
+  const effectiveYear = selectedYear ?? currentYear ?? fallbackYear;
+  const { summary, isLoading: summaryLoading } = useYearSummary(effectiveYear);
 
-  /* ---- Persist settings changes ---- */
-  const persistDigits = async (d: DigitPref) => {
-    setDigits(d);
-    await updateSettings({ digits: d });
-  };
-  const persistTheme = async (t: ThemePref) => {
-    setTheme(t);
-    await updateSettings({ theme: t });
-  };
-
-  if (!boot.ok) {
-    return (
-      <main className="min-h-safe flex items-center justify-center p-6">
-        <div className="card max-w-md w-full p-6 text-center">
-          <h1 className="text-lg font-bold text-text mb-2">سرچشمه</h1>
-          <p className="text-sm text-text-muted">
-            {boot.error ? `خطا: ${boot.error}` : 'در حال راه‌اندازی…'}
-          </p>
-        </div>
-      </main>
-    );
+  // Show loading screen until DB is ready
+  if (!ready || yearsLoading) {
+    return <LoadingScreen />;
   }
 
-  return (
-    <HealthScreen
-      boot={boot}
-      digits={digits}
-      theme={theme}
-      onDigits={persistDigits}
-      onTheme={persistTheme}
-    />
-  );
-}
-
-/* ------------------------------------------------------------------------- */
-
-interface HealthScreenProps {
-  boot: BootResult;
-  digits: DigitPref;
-  theme: ThemePref;
-  onDigits: (d: DigitPref) => void;
-  onTheme: (t: ThemePref) => void;
-}
-
-function HealthScreen({ boot, digits, theme, onDigits, onTheme }: HealthScreenProps) {
-  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const yearsToShow = years.length > 0 ? years : [effectiveYear];
 
   return (
-    <main className="min-h-safe px-4 py-6 max-w-2xl mx-auto space-y-4">
-      {/* Header */}
-      <header className="text-center pt-2 pb-2">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl mb-3"
-             style={{ background: 'rgb(var(--brand-primary) / 0.1)' }}>
-          <DropIcon />
-        </div>
-        <h1 className="text-2xl font-bold text-text">سرچشمه</h1>
-        <p className="text-sm text-text-muted mt-1">
-          مرحله ۱ تا ۳ فاز ۱ — راه‌اندازی موفق
-        </p>
-      </header>
+    <main className="min-h-safe pb-24">
+      <DashboardHeader
+        years={yearsToShow}
+        selectedYear={effectiveYear}
+        onSelectYear={setSelectedYear}
+        digits={digits}
+      />
 
-      {/* Boot status */}
-      <section className="card p-4 space-y-3">
-        <SectionTitle>وضعیت دیتابیس</SectionTitle>
-        <div className="grid grid-cols-3 gap-2">
-          <Stat label="تراکنش‌ها" value={boot.counts?.transactions ?? 0} digits={digits} />
-          <Stat label="دسته‌ها" value={boot.counts?.categories ?? 0} digits={digits} />
-          <Stat label="مقصدها" value={boot.counts?.destinations ?? 0} digits={digits} />
-        </div>
-        <div className="text-xs text-text-muted">
-          از این تعداد، <span className="nums digits-font font-medium text-text">{fa(boot.sampleCount ?? 0)}</span> رکورد نمونه‌اند (با فلگ <code className="text-[11px]">isDemo</code>) — قابل حذف انتخابی از تنظیمات.
-        </div>
-      </section>
-
-      {/* Theme switcher */}
-      <section className="card p-4 space-y-3">
-        <SectionTitle>تم</SectionTitle>
-        <SegmentedControl
-          value={theme}
-          options={[
-            { value: 'system', label: 'سیستم' },
-            { value: 'light', label: 'روشن' },
-            { value: 'dark', label: 'تاریک' },
-          ]}
-          onChange={(v) => onTheme(v as ThemePref)}
+      <div className="px-4 space-y-4 max-w-2xl mx-auto">
+        {/* Year total card with count-up */}
+        <YearTotalCard
+          totalAmount={summary.totalAmount}
+          totalCount={summary.totalCount}
+          isLoading={summaryLoading}
+          digits={digits}
         />
-        <p className="text-xs text-text-muted">
-          کارت‌ها در هر دو تم باید از پس‌زمینه متمایز دیده بشن — در تاریک با حاشیه + هایلایت بالای کارت.
+
+        {/* Season cards grid — 1 col mobile, 2 cols sm+ */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {SEASONS.map((season) => (
+            <SeasonCard
+              key={season}
+              season={season}
+              totalAmount={summary.seasons[season].totalAmount}
+              totalCount={summary.seasons[season].totalCount}
+              yearTotal={summary.totalAmount}
+              digits={digits}
+              onClick={() => {
+                // Phase 1 step 6: navigate to season page
+                // For now, just a no-op
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Hint that dashboard is interactive */}
+        <p className="text-center text-xs text-text-faint pt-2">
+          مرحله ۴ — داشبورد آماده‌ست. فاز بعدی: فرم ثبت تراکنش.
         </p>
-      </section>
+      </div>
 
-      {/* Digits switcher */}
-      <section className="card p-4 space-y-3">
-        <SectionTitle>اعداد</SectionTitle>
-        <SegmentedControl
-          value={digits}
-          options={[
-            { value: 'fa', label: 'فارسی ۱۲۳' },
-            { value: 'en', label: 'انگلیسی 123' },
-          ]}
-          onChange={(v) => onDigits(v as DigitPref)}
-        />
-        <div className="space-y-1.5">
-          <SampleRow label="مبلغ بلند" value={formatToman(12345678, digits)} />
-          <SampleRow label="مبلغ فشرده" value={formatCompact(12_500_000, digits)} />
-          <SampleRow label="گروه‌بندی ورودی" value={groupDigits('1234567', digits)} />
-          <SampleRow label="پارس ورودی" value={String(parseAmountInput('۱٬۲۳۴٬۵۶۷'))} />
-          <SampleRow label="درصد از سال" value={formatPercent(0.345, digits)} />
-        </div>
-      </section>
-
-      {/* Jalali */}
-      <section className="card p-4 space-y-3">
-        <SectionTitle>تقویم جلالی</SectionTitle>
-        <div className="space-y-1.5">
-          <SampleRow label="امروز" value={formatJalaliLong(todayISO, digits)} />
-          <SampleRow label="کوتاه" value={formatJalaliShort(todayISO, digits)} />
-          <SampleRow label="ماه-سال" value={formatJalaliMonthYear(todayISO, digits)} />
-          <SampleRow label="سال" value={String(jalaliYear(todayISO))} />
-          <SampleRow label="فصل" value={SEASONS_FA[jalaliSeason(todayISO)]} />
-        </div>
-        <div className="text-xs text-text-muted">
-          ذخیره‌سازی به‌صورت ISO میلادی (<code className="text-[11px]">{todayISO}</code>) — جلالی فقط برای نمایش.
-        </div>
-      </section>
-
-      {/* Card separation demo */}
-      <section className="card p-4 space-y-3">
-        <SectionTitle>تفکیک کارت از صفحه</SectionTitle>
-        <p className="text-xs text-text-muted">
-          در تم روشن: حاشیه‌ی مویی + سایه‌ی دولایه + گوشه‌ی ۲۰px.
-          در تم تاریک: حاشیه + هایلایت بالای کارت (سایه بی‌فایده‌ست).
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="card p-3">
-            <div className="text-[11px] text-text-muted">کارت ۱</div>
-            <div className="nums digits-font text-lg font-bold text-text mt-1">
-              {formatCompact(4_500_000, digits)}
-            </div>
-          </div>
-          <div className="card p-3">
-            <div className="text-[11px] text-text-muted">کارت ۲</div>
-            <div className="nums digits-font text-lg font-bold text-text mt-1">
-              {formatCompact(12_300_000, digits)}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="text-center text-[11px] text-text-faint pt-4 pb-2">
-        v0.1 · مرحله ۱ تا ۳ آماده است — منتظر فونت رقم‌ها برای ادامه.
-      </footer>
+      <Fab onAdd={() => { /* Phase 1 step 5 */ }} />
     </main>
   );
 }
 
 /* ------------------------------------------------------------------------- */
-/* Small presentational helpers                                              */
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-sm font-semibold text-text">{children}</h2>;
-}
-
-function Stat({ label, value, digits }: { label: string; value: number; digits: DigitPref }) {
-  return (
-    <div className="rounded-2xl p-3 text-center" style={{ background: 'rgb(var(--surface-2))' }}>
-      <div className="nums digits-font text-xl font-bold text-text">
-        {digits === 'fa' ? fa(value) : value}
-      </div>
-      <div className="text-[11px] text-text-muted mt-0.5">{label}</div>
-    </div>
-  );
-}
-
-function SampleRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-text-muted">{label}</span>
-      <span className="nums digits-font font-medium text-text">{value}</span>
-    </div>
-  );
-}
-
-function SegmentedControl({
-  value,
-  options,
-  onChange,
+function DashboardHeader({
+  years,
+  selectedYear,
+  onSelectYear,
+  digits,
 }: {
-  value: string;
-  options: ReadonlyArray<{ value: string; label: string }>;
-  onChange: (v: string) => void;
+  years: ReadonlyArray<number>;
+  selectedYear: number;
+  onSelectYear: (y: number) => void;
+  digits: 'fa' | 'en';
 }) {
   return (
-    <div className="rounded-2xl p-1 flex" style={{ background: 'rgb(var(--surface-2))' }}>
-      {options.map((opt) => {
-        const active = opt.value === value;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={`flex-1 py-2 text-sm rounded-xl transition-colors ${
-              active
-                ? 'bg-surface text-text shadow-sm font-medium'
-                : 'text-text-muted hover:text-text'
-            }`}
-            style={active ? { background: 'rgb(var(--surface))' } : undefined}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
+    <header
+      className="sticky top-0 z-30 px-4 py-3 max-w-2xl mx-auto w-full flex items-center justify-between"
+      style={{
+        background: 'rgb(var(--bg) / 0.85)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgb(var(--text) / 0.06)',
+        paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className="w-8 h-8 rounded-2xl flex items-center justify-center"
+          style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}
+        >
+          <DropIconSmall />
+        </div>
+        <h1 className="text-lg font-bold text-text">سرچشمه</h1>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <YearSwitcher
+          years={years}
+          selectedYear={selectedYear}
+          onSelect={onSelectYear}
+          digits={digits}
+        />
+        <button
+          type="button"
+          aria-label="تنظیمات"
+          className="w-9 h-9 rounded-full flex items-center justify-center pressable"
+          style={{
+            background: 'rgb(var(--surface-2))',
+            color: 'rgb(var(--text-muted))',
+          }}
+        >
+          <SettingsIcon size={18} strokeWidth={2} />
+        </button>
+      </div>
+    </header>
   );
 }
 
-function DropIcon() {
+function YearTotalCard({
+  totalAmount,
+  totalCount,
+  isLoading,
+  digits,
+}: {
+  totalAmount: number;
+  totalCount: number;
+  isLoading: boolean;
+  digits: 'fa' | 'en';
+}) {
   return (
-    <svg
-      width="32"
-      height="32"
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
+    <section className="card p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs text-text-muted">جمع درآمد سال</p>
+          {isLoading ? (
+            <div className="mt-2 h-9 w-40 rounded-lg animate-pulse" style={{ background: 'rgb(var(--surface-2))' }} />
+          ) : (
+            <CountUp value={totalAmount} duration={900}>
+              {(current) => (
+                <div className="nums digits-font text-3xl font-bold text-text leading-tight mt-1">
+                  {formatToman(current, digits)}
+                </div>
+              )}
+            </CountUp>
+          )}
+          <div className="mt-2 flex items-center gap-1.5">
+            <span className="text-xs text-text-muted">
+              <span className="nums digits-font font-medium text-text">
+                {digits === 'fa' ? faNum(totalCount) : totalCount}
+              </span>{' '}
+              تراکنش ثبت شده
+            </span>
+          </div>
+        </div>
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center"
+          style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}
+        >
+          <DropIconLarge />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <main className="min-h-safe flex items-center justify-center p-6">
+      <div className="card max-w-md w-full p-6 text-center">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-3xl mb-3 animate-pulse"
+             style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}>
+          <DropIconLarge />
+        </div>
+        <h1 className="text-lg font-bold text-text mb-1">سرچشمه</h1>
+        <p className="text-sm text-text-muted">در حال بارگذاری…</p>
+      </div>
+    </main>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* Small icons — drop/tear shape, matching the app's brand */
+
+function DropIconSmall() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 32 32" fill="none" aria-hidden="true">
       <path
         d="M16 4C16 4 7 13.5 7 20a9 9 0 0 0 18 0c0-6.5-9-16-9-16Z"
         fill="currentColor"
         className="text-brand-primary"
-        opacity="0.85"
+        opacity="0.9"
+      />
+    </svg>
+  );
+}
+
+function DropIconLarge() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path
+        d="M16 4C16 4 7 13.5 7 20a9 9 0 0 0 18 0c0-6.5-9-16-9-16Z"
+        fill="currentColor"
+        className="text-brand-primary"
+        opacity="0.9"
       />
       <path
         d="M12 19a4 4 0 0 0 4 4"
@@ -339,6 +250,6 @@ function DropIcon() {
   );
 }
 
-function fa(n: number): string {
+function faNum(n: number): string {
   return String(n).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
 }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Vazirmatn } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
+import { AppSettingsProvider } from '@/features/dashboard/AppSettingsContext';
 import './globals.css';
 
 const vazirmatn = Vazirmatn({
@@ -53,8 +54,10 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl" data-sarcheshmeh suppressHydrationWarning>
       <body className={`${vazirmatn.variable} antialiased`}>
-        {children}
-        <Toaster />
+        <AppSettingsProvider>
+          {children}
+          <Toaster />
+        </AppSettingsProvider>
       </body>
     </html>
   );
