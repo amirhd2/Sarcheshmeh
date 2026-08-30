@@ -222,8 +222,10 @@ export function TransactionForm({
 
         {/* Date chips + AC button (clear amount) — PRD user feedback #3
             AC is now a pill-shaped button (larger, easier to tap, but
-            still subtle enough to not dominate the chip row). */}
-        <div className="px-4 pb-3 flex gap-2 items-center flex-wrap">
+            still subtle enough to not dominate the chip row).
+            The row has a FIXED min-height so AC appearing/disappearing
+            doesn't cause a vertical jump (PRD user feedback this iteration). */}
+        <div className="px-4 pb-3 flex gap-2 items-center flex-wrap min-h-[48px]">
           <DateChip
             active={dateISO === todayISO && !showDatePicker}
             onClick={() => {

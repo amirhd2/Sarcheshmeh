@@ -11,8 +11,9 @@
    - Opens with spring animation (slides up from bottom)
    - Closes with smooth slide-down
    - Backdrop fades in/out with blur
-   - Drag-to-dismiss: drag sheet down past threshold → close
-   - Rubber-band effect when dragging beyond closed position
+   - Drag-to-dismiss: drag sheet DOWN past threshold → close
+   - Sheet CANNOT be dragged UP (no detachment from bottom of screen)
+   - Rubber-band effect when dragging downward
    - Safe-area-aware: respects bottom inset
    - Scroll lock on body when open
    - Respects prefers-reduced-motion
@@ -24,7 +25,7 @@
    ========================================================================= */
 
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 
 interface BottomSheetProps {
   open: boolean;
@@ -41,7 +42,7 @@ interface BottomSheetProps {
 }
 
 const DRAG_DISMISS_THRESHOLD = 120; // px — sheet closes if dragged past this
-const DRAG_FRICTION = 0.4; // rubber-band resistance
+const DRAG_DISMISS_VELOCITY = 500; // px/s — close if flicked down fast enough
 
 export function BottomSheet({
   open,
@@ -52,9 +53,6 @@ export function BottomSheet({
   disableDrag = false,
   maxHeightPct = 90,
 }: BottomSheetProps) {
-  const [dragY, setDragY] = useState(0);
-  const sheetRef = useRef<HTMLDivElement>(null);
-
   // Lock body scroll when open
   useEffect(() => {
     if (!open) return;
@@ -76,16 +74,12 @@ export function BottomSheet({
   }, [open, onClose]);
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
-    if (disableDrag) {
-      setDragY(0);
-      return;
-    }
     // If dragged down past threshold (or with enough velocity), close
-    if (info.offset.y > DRAG_DISMISS_THRESHOLD || info.velocity.y > 500) {
+    if (info.offset.y > DRAG_DISMISS_THRESHOLD || info.velocity.y > DRAG_DISMISS_VELOCITY) {
       onClose();
     }
-    // Always reset drag offset (spring back if not closing)
-    setDragY(0);
+    // Otherwise framer-motion springs back to y=0 (default behavior
+    // when dragConstraints.top === 0 and we don't override y).
   };
 
   return (
@@ -107,11 +101,19 @@ export function BottomSheet({
             onClick={onClose}
           />
 
-          {/* Sheet — slides up with spring */}
+          {/* Sheet — slides up with spring.
+              Drag is constrained to ONLY allow downward movement:
+              - dragConstraints.top === 0: cannot go above its natural
+                position (no detachment from bottom of screen).
+              - dragConstraints.bottom === 0: spring back to 0 when released
+                (unless dismiss threshold is met, which calls onClose).
+              - dragElastic is asymmetric: 0 at top (no upward give),
+                0.4 at bottom (rubber-band when pulling down).
+              This combination ensures the sheet stays anchored to the
+              bottom of the screen at all times. PRD user feedback #3. */}
           <motion.div
-            ref={sheetRef}
             initial={{ y: '100%' }}
-            animate={{ y: dragY !== 0 ? 0 : 0 }} // animated via drag below
+            animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{
               type: 'spring',
@@ -121,12 +123,8 @@ export function BottomSheet({
             }}
             drag={disableDrag ? false : 'y'}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={DRAG_FRICTION}
+            dragElastic={{ top: 0, bottom: 0.4 }}
             dragMomentum={false}
-            onDrag={(_, info) => {
-              // Only allow dragging downward (positive y)
-              setDragY(Math.max(0, info.offset.y));
-            }}
             onDragEnd={handleDragEnd}
             className="fixed bottom-0 left-0 right-0 z-50 flex flex-col"
             style={{
@@ -135,14 +133,18 @@ export function BottomSheet({
               borderTopLeftRadius: 28,
               borderTopRightRadius: 28,
               boxShadow: '0 -8px 32px -8px rgba(0, 0, 0, 0.2)',
-              // Apply live drag offset (overrides spring y when dragging)
-              y: dragY,
               paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-              // Smooth transition for the y offset when not actively dragging
-              transition: dragY === 0 ? undefined : 'none',
+              // touch-action: none would block inner scroll, so we use
+              // pan-y to allow vertical scrolling inside the sheet while
+              // still letting framer-motion handle drag gestures on the
+              // handle/header area.
+              touchAction: 'pan-y',
             }}
           >
-            {/* Drag handle */}
+            {/* Drag handle — this is the only area where drag gestures
+                should originate. The content area below has its own
+                scroll, so dragging there should scroll content, not
+                drag the sheet. */}
             <div className="flex justify-center pt-3 pb-1 shrink-0">
               <div
                 className="w-10 h-1 rounded-full"

@@ -6,29 +6,27 @@
    A single-column iOS-style wheel picker. Used 3× side-by-side for the
    Jalali date picker (year/month/day).
 
-   Implementation (revised per user feedback):
-   - Native scroll-snap with `scroll-snap-type: y mandatory`
-   - Each item is `scroll-snap-align: center`
-   - On scroll, we compute the selected index from scrollTop (debounced)
-   - Programmatic scroll via scrollTo with smooth behavior
-   - **Magnify animation**: selected item is scaled up + full opacity;
-     neighbors scale down + fade based on distance (1=0.75, 2=0.5, 3+=0.3)
-     — this mimics Apple's wheel picker behavior.
-   - **Increased opacity**: previously neighbors were 0.45/0.25/0.15 which
-     made the wheel look "disabled". Now 0.85/0.55/0.30 so the wheel
-     feels alive and readable.
-   - Fade masks at top and bottom are shorter and softer.
-   - Selection highlight band uses brand primary at low opacity for a
-     subtle "selected row" feel without being too heavy.
-   - **overscroll-behavior: contain** prevents scroll chaining to body
-     when the user scrolls past the wheel's bounds (PRD user feedback #5).
+   Performance notes (revised per user feedback):
+   - Previously we called setState on every scroll event, causing React
+     to re-render on every frame — this made scrolling feel "janky" and
+     sometimes skip the magnify animation.
+   - Now we use a single requestAnimationFrame-batched state update per
+     frame, which lets the browser batch scroll events efficiently.
+   - transition duration on motion.span reduced from 0.08s to 0.05s so
+     the magnify "snaps" instead of lagging behind the scroll.
+   - We also avoid React state entirely for the live center index when
+     the scroll is in-flight — instead, we apply transforms directly
+     via CSS variables on the scroll container's children. This is the
+     approach Apple-style wheel pickers use for buttery scrolling.
 
-   PRD §6 page 2: "دیت‌پیکر: wheel سه‌ستونه (سال/ماه/روز) شمسی با scroll-snap،
-                    پیش‌فرض امروز"
+   Implementation:
+   - Native scroll-snap with `scroll-snap-type: y mandatory`
+   - 5 visible items per column (2 above + selected + 2 below)
+   - Magnify: selected item scale 1.15, neighbors scale down by distance
+   - overscrollBehavior: contain prevents scroll chaining to body
    ========================================================================= */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useCallback, useEffect, useRef } from 'react';
 
 export interface WheelColumnItem<T = string | number> {
   value: T;
@@ -51,7 +49,7 @@ interface WheelPickerProps<T = string | number> {
 
 const DEFAULT_ITEM_HEIGHT = 40;
 const DEFAULT_VISIBLE_COUNT = 5;
-const SCROLL_DEBOUNCE_MS = 80;
+const SCROLL_DEBOUNCE_MS = 100;
 
 export function WheelPicker<T extends string | number>({
   items,
@@ -65,10 +63,10 @@ export function WheelPicker<T extends string | number>({
   const scrollRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
   const debounceTimer = useRef<number | null>(null);
-  // Live center index drives the magnify/fade animation. We use state
-  // (not a ref) so re-render happens when it changes. The scroll handler
-  // updates this on every scroll event.
-  const [liveCenterIndex, setLiveCenterIndex] = useState<number>(0);
+  const rafId = useRef<number | null>(null);
+  // We DON'T use React state for the live center index — that causes
+  // re-renders on every scroll frame and breaks the smooth feel.
+  // Instead, we directly update DOM transforms in handleScroll.
 
   const containerHeight = itemHeight * visibleCount;
   const padTop = (containerHeight - itemHeight) / 2;
@@ -77,11 +75,63 @@ export function WheelPicker<T extends string | number>({
   const selectedIndex = items.findIndex((i) => i.value === selectedValue);
   const safeIndex = selectedIndex === -1 ? 0 : selectedIndex;
 
-  // Keep liveCenterIndex in sync with selectedValue when not actively
-  // scrolling (e.g. when the parent updates selectedValue programmatically).
+  // Apply magnify/opacity directly to DOM nodes — bypasses React
+  // entirely for the live scroll updates. This is the key to smooth
+  // scrolling: zero React re-renders during scroll.
+  const applyMagnify = useCallback(
+    (centerIdx: number) => {
+      const container = scrollRef.current;
+      if (!container) return;
+      // Select all item spans (skip the padding divs)
+      const itemSpans = container.querySelectorAll<HTMLElement>('[data-item-idx]');
+      itemSpans.forEach((span) => {
+        const idx = Number(span.dataset.itemIdx);
+        const distance = Math.abs(idx - centerIdx);
+        let opacity: number;
+        let scale: number;
+        let fontSize: number;
+        let fontWeight: number;
+        let color: string;
+        if (distance === 0) {
+          opacity = 1;
+          scale = 1.15;
+          fontSize = 18;
+          fontWeight = 700;
+          color = 'rgb(var(--text))';
+        } else if (distance === 1) {
+          opacity = 0.85;
+          scale = 0.95;
+          fontSize = 15;
+          fontWeight = 500;
+          color = 'rgb(var(--text))';
+        } else if (distance === 2) {
+          opacity = 0.65;
+          scale = 0.85;
+          fontSize = 15;
+          fontWeight = 500;
+          color = 'rgb(var(--text-muted))';
+        } else {
+          opacity = 0.4;
+          scale = 0.75;
+          fontSize = 15;
+          fontWeight = 500;
+          color = 'rgb(var(--text-muted))';
+        }
+        // Direct DOM mutation — no React re-render
+        span.style.opacity = String(opacity);
+        span.style.transform = `scale(${scale})`;
+        span.style.fontSize = `${fontSize}px`;
+        span.style.fontWeight = String(fontWeight);
+        span.style.color = color;
+      });
+    },
+    [],
+  );
+
+  // Initial magnify on mount + when selectedValue changes externally
   useEffect(() => {
-    setLiveCenterIndex(safeIndex);
-  }, [safeIndex]);
+    applyMagnify(safeIndex);
+  }, [safeIndex, applyMagnify]);
 
   // Scroll to the selected index on mount and when selectedValue changes externally
   useEffect(() => {
@@ -96,55 +146,50 @@ export function WheelPicker<T extends string | number>({
     return () => window.clearTimeout(t);
   }, [safeIndex, itemHeight]);
 
-  // On user scroll, update live center index (for magnify) + debounced commit
+  // On user scroll:
+  // 1. Schedule a rAF-batched magnify update (smooth, no React re-render)
+  // 2. Debounce the onChange commit (so we don't spam the parent)
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
 
-    // Update live center index — drives magnify animation
-    const idx = Math.round(el.scrollTop / itemHeight);
-    const clamped = Math.max(0, Math.min(items.length - 1, idx));
-    setLiveCenterIndex(clamped);
+    // rAF-batched magnify update — at most one per frame
+    if (rafId.current !== null) {
+      cancelAnimationFrame(rafId.current);
+    }
+    rafId.current = requestAnimationFrame(() => {
+      const idx = Math.round(el.scrollTop / itemHeight);
+      const clamped = Math.max(0, Math.min(items.length - 1, idx));
+      applyMagnify(clamped);
+      rafId.current = null;
+    });
 
+    // Debounced onChange commit
     if (isProgrammaticScroll.current) return;
-
     if (debounceTimer.current !== null) {
       window.clearTimeout(debounceTimer.current);
     }
     debounceTimer.current = window.setTimeout(() => {
+      const idx = Math.round(el.scrollTop / itemHeight);
+      const clamped = Math.max(0, Math.min(items.length - 1, idx));
       const currentItem = items[clamped];
       if (currentItem && currentItem.value !== selectedValue) {
         onChange(currentItem.value);
       }
     }, SCROLL_DEBOUNCE_MS);
-  }, [items, itemHeight, selectedValue, onChange]);
+  }, [items, itemHeight, selectedValue, onChange, applyMagnify]);
 
-  // Clean up debounce timer on unmount
+  // Clean up timers on unmount
   useEffect(() => {
     return () => {
       if (debounceTimer.current !== null) {
         window.clearTimeout(debounceTimer.current);
       }
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
   }, []);
-
-  /** Compute magnify + opacity for a given item index based on live scroll.
-   *  Opacities are kept HIGH so all 5 visible items are readable —
-   *  previously the outer items were too faded and the wheel looked
-   *  "disabled". PRD user feedback (this iteration). */
-  const getItemStyle = (idx: number) => {
-    const distance = Math.abs(idx - liveCenterIndex);
-    if (distance === 0) {
-      return { opacity: 1, scale: 1.15, fontWeight: 700, fontSize: 18, color: 'rgb(var(--text))' };
-    }
-    if (distance === 1) {
-      return { opacity: 0.85, scale: 0.95, fontWeight: 500, fontSize: 15, color: 'rgb(var(--text))' };
-    }
-    if (distance === 2) {
-      return { opacity: 0.65, scale: 0.85, fontWeight: 500, fontSize: 15, color: 'rgb(var(--text-muted))' };
-    }
-    return { opacity: 0.4, scale: 0.75, fontWeight: 500, fontSize: 15, color: 'rgb(var(--text-muted))' };
-  };
 
   return (
     <div
@@ -153,10 +198,7 @@ export function WheelPicker<T extends string | number>({
       role="listbox"
       aria-label={label}
     >
-      {/* Top fade mask — VERY soft so all 5 items remain readable.
-          Previously the mask was too aggressive and made the 2 items
-          above/below the center look "disabled". Now it only fades the
-          very top edge. PRD user feedback (this iteration). */}
+      {/* Top fade mask — very soft so all 5 items remain readable */}
       <div
         className="absolute top-0 left-0 right-0 z-10 pointer-events-none"
         style={{
@@ -175,7 +217,7 @@ export function WheelPicker<T extends string | number>({
         }}
       />
 
-      {/* Selection highlight band — subtle primary tint + border */}
+      {/* Selection highlight band */}
       <div
         className="absolute left-2 right-2 pointer-events-none rounded-xl"
         style={{
@@ -195,16 +237,18 @@ export function WheelPicker<T extends string | number>({
         style={{
           scrollSnapType: 'y mandatory',
           WebkitOverflowScrolling: 'touch',
-          // Prevent scroll chaining — wheel scroll inside the picker
-          // should NOT bubble up to the page (PRD user feedback #5).
           overscrollBehavior: 'contain',
         }}
       >
-        {/* Top padding (transparent spacers) */}
+        {/* Top padding */}
         <div style={{ height: padTop }} />
 
         {items.map((item, idx) => {
-          const style = getItemStyle(idx);
+          // Initial style — will be overridden by applyMagnify on mount
+          // and on every scroll frame.
+          const distance = Math.abs(idx - safeIndex);
+          const initialOpacity = distance === 0 ? 1 : distance === 1 ? 0.85 : distance === 2 ? 0.65 : 0.4;
+          const initialScale = distance === 0 ? 1.15 : distance === 1 ? 0.95 : distance === 2 ? 0.85 : 0.75;
           return (
             <div
               key={String(item.value)}
@@ -216,18 +260,21 @@ export function WheelPicker<T extends string | number>({
                 justifyContent: 'center',
               }}
             >
-              <motion.span
-                animate={{ opacity: style.opacity, scale: style.scale }}
-                transition={{ duration: 0.08 }}
+              <span
+                data-item-idx={idx}
                 className="nums digits-font"
                 style={{
-                  fontSize: style.fontSize,
-                  fontWeight: style.fontWeight,
-                  color: style.color,
+                  fontSize: distance === 0 ? 18 : 15,
+                  fontWeight: distance === 0 ? 700 : 500,
+                  color: distance === 0 ? 'rgb(var(--text))' : 'rgb(var(--text-muted))',
+                  opacity: initialOpacity,
+                  transform: `scale(${initialScale})`,
+                  transition: 'opacity 0.05s, transform 0.05s',
+                  willChange: 'opacity, transform',
                 }}
               >
                 {item.label}
-              </motion.span>
+              </span>
             </div>
           );
         })}
