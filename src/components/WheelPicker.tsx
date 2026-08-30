@@ -128,19 +128,22 @@ export function WheelPicker<T extends string | number>({
     };
   }, []);
 
-  /** Compute magnify + opacity for a given item index based on live scroll. */
+  /** Compute magnify + opacity for a given item index based on live scroll.
+   *  Opacities are kept HIGH so all 5 visible items are readable —
+   *  previously the outer items were too faded and the wheel looked
+   *  "disabled". PRD user feedback (this iteration). */
   const getItemStyle = (idx: number) => {
     const distance = Math.abs(idx - liveCenterIndex);
     if (distance === 0) {
       return { opacity: 1, scale: 1.15, fontWeight: 700, fontSize: 18, color: 'rgb(var(--text))' };
     }
     if (distance === 1) {
-      return { opacity: 0.75, scale: 0.95, fontWeight: 500, fontSize: 15, color: 'rgb(var(--text-muted))' };
+      return { opacity: 0.85, scale: 0.95, fontWeight: 500, fontSize: 15, color: 'rgb(var(--text))' };
     }
     if (distance === 2) {
-      return { opacity: 0.5, scale: 0.85, fontWeight: 500, fontSize: 15, color: 'rgb(var(--text-muted))' };
+      return { opacity: 0.65, scale: 0.85, fontWeight: 500, fontSize: 15, color: 'rgb(var(--text-muted))' };
     }
-    return { opacity: 0.3, scale: 0.75, fontWeight: 500, fontSize: 15, color: 'rgb(var(--text-muted))' };
+    return { opacity: 0.4, scale: 0.75, fontWeight: 500, fontSize: 15, color: 'rgb(var(--text-muted))' };
   };
 
   return (
@@ -150,22 +153,25 @@ export function WheelPicker<T extends string | number>({
       role="listbox"
       aria-label={label}
     >
-      {/* Top fade mask — shorter and softer */}
+      {/* Top fade mask — VERY soft so all 5 items remain readable.
+          Previously the mask was too aggressive and made the 2 items
+          above/below the center look "disabled". Now it only fades the
+          very top edge. PRD user feedback (this iteration). */}
       <div
         className="absolute top-0 left-0 right-0 z-10 pointer-events-none"
         style={{
-          height: padTop,
+          height: padTop * 0.5,
           background:
-            'linear-gradient(to bottom, rgb(var(--surface)) 30%, rgb(var(--surface) / 0) 100%)',
+            'linear-gradient(to bottom, rgb(var(--surface)) 0%, rgb(var(--surface) / 0) 100%)',
         }}
       />
       {/* Bottom fade mask */}
       <div
         className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none"
         style={{
-          height: padTop,
+          height: padTop * 0.5,
           background:
-            'linear-gradient(to top, rgb(var(--surface)) 30%, rgb(var(--surface) / 0) 100%)',
+            'linear-gradient(to top, rgb(var(--surface)) 0%, rgb(var(--surface) / 0) 100%)',
         }}
       />
 

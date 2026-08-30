@@ -173,10 +173,16 @@ export function TransactionForm({
   if (stage === 'amount') {
     return (
       <div className="flex flex-col">
-        {/* Amount display — large, with live grouping + Persian words */}
+        {/* Amount display — large, with live grouping + Persian words.
+            The wrapper has a FIXED min-height so the layout below it
+            (date chips + swap zone) never shifts when the amount or
+            its word-form appears/disappears. This is critical for
+            smooth transitions — PRD user feedback (this iteration). */}
         <div className="px-5 pt-2 pb-4 text-center">
           <div className="text-xs text-text-muted mb-2">مبلغ تراکنش</div>
-          <div className="min-h-[64px] flex items-center justify-center">
+          {/* Amount number — fixed height so the line below it doesn't
+              push content down when the number scales in/out. */}
+          <div className="h-[56px] flex items-center justify-center">
             {amountRaw === '' ? (
               <span className="nums digits-font text-4xl font-bold text-text-faint">
                 ۰
@@ -193,21 +199,25 @@ export function TransactionForm({
               </motion.span>
             )}
           </div>
-          {/* Amount in Persian words — PRD user feedback #4 */}
-          <AnimatePresence mode="wait">
-            {amountNumber > 0 && (
-              <motion.div
-                key={amountNumber}
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
-                className="text-xs text-text-muted mt-2 leading-relaxed"
-              >
-                {formatTomanWords(amountNumber)}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Amount in Persian words — fixed height line so AC clearing
+              the amount doesn't cause a vertical jump. PRD #4 + this
+              iteration's "no jump" rule. */}
+          <div className="h-[20px] mt-2 flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              {amountNumber > 0 && (
+                <motion.div
+                  key={amountNumber}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-xs text-text-muted leading-relaxed"
+                >
+                  {formatTomanWords(amountNumber)}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Date chips + AC button (clear amount) — PRD user feedback #3
@@ -277,8 +287,12 @@ export function TransactionForm({
             (slide up + fade) — they occupy the same slot, so the sheet
             height doesn't change and nothing scrolls behind it.
 
-            PRD user feedback (this iteration): swap instead of stack. */}
-        <div className="relative">
+            CRITICAL: the swap zone has a FIXED min-height equal to the
+            taller of the two panels (number pad). Without this, the
+            sheet height would jump when swapping because the two panels
+            have different intrinsic heights. PRD user feedback (this
+            iteration): "no jump on swap". */}
+        <div className="relative min-h-[340px]">
           <AnimatePresence mode="wait">
             {showDatePicker ? (
               <motion.div
@@ -287,9 +301,13 @@ export function TransactionForm({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 16 }}
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                // Flex column + justify-center so the date picker panel
+                // is vertically centered within the fixed-height zone
+                // (matching the number pad's vertical position).
+                className="absolute inset-0 flex flex-col justify-center"
               >
                 {/* Date picker panel — fills the slot the number pad
-                    would have used. Larger height for 5 visible items
+                    would have used. 5 visible items per column
                     (2 above + selected + 2 below) per Apple style. */}
                 <div className="mx-4 mb-3 card p-3">
                   <JalaliDatePicker
@@ -306,11 +324,10 @@ export function TransactionForm({
                   type="button"
                   onClick={() => setShowDatePicker(false)}
                   whileTap={{ scale: 0.97 }}
-                  className="w-full mx-4 mb-2 py-4 rounded-2xl font-medium text-base flex items-center justify-center gap-2"
+                  className="py-4 rounded-2xl font-medium text-base flex items-center justify-center gap-2 mx-4"
                   style={{
                     background: 'rgb(var(--brand-primary))',
                     color: 'white',
-                    width: 'calc(100% - 32px)',
                   }}
                 >
                   <Check size={18} strokeWidth={2.5} />
@@ -324,6 +341,7 @@ export function TransactionForm({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16 }}
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0"
               >
                 <NumberPad
                   value={amountRaw}

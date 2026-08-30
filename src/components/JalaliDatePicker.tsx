@@ -121,26 +121,30 @@ export function JalaliDatePicker({ value, onChange, digits }: JalaliDatePickerPr
 
   return (
     <div className="flex flex-row items-stretch justify-center gap-1 px-2">
+      {/* All three columns get flex-1 so they have EQUAL width on every
+          screen size (mobile, tablet, desktop). Previously month was
+          flex-[1.5] which made it wider than year/day — looked uneven
+          on tablets. PRD user feedback (this iteration). */}
       <WheelPicker
         items={yearItems}
         selectedValue={parts.jy}
         onChange={handleYearChange}
         label="سال"
-        className="max-w-[80px]"
+        className="flex-1"
       />
       <WheelPicker
         items={monthItems}
         selectedValue={parts.jm}
         onChange={handleMonthChange}
         label="ماه"
-        className="flex-[1.5]"
+        className="flex-1"
       />
       <WheelPicker
         items={dayItems}
         selectedValue={parts.jd}
         onChange={handleDayChange}
         label="روز"
-        className="max-w-[70px]"
+        className="flex-1"
       />
     </div>
   );
