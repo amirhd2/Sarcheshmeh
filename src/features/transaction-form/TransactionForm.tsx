@@ -31,7 +31,7 @@
    ========================================================================= */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Check, ChevronRight, Calendar, Eraser } from 'lucide-react';
 import { NumberPad } from '@/components/NumberPad';
 import { JalaliDatePicker } from '@/components/JalaliDatePicker';
@@ -104,18 +104,11 @@ export function TransactionForm({
   );
   const [note, setNote] = useState<string>(initialTransaction?.note ?? '');
 
-  // --- Lock body scroll when date picker is open ---
-  // PRD user feedback #5: when the wheel picker is shown, scrolling
-  // should be confined to the picker itself (overscroll-behavior:contain
-  // handles that) — and the body behind it should NOT scroll.
-  useEffect(() => {
-    if (!showDatePicker) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = original;
-    };
-  }, [showDatePicker]);
+  // NOTE: previously we locked body scroll when the date picker was open.
+  // After the swap redesign (PRD user feedback #2 on this iteration),
+  // the date picker REPLACES the number pad in-place — the sheet height
+  // stays the same and nothing scrolls behind it. So the body lock is
+  // no longer needed.
 
   // --- Derived ---
   const amountNumber = useMemo(() => parseAmountInput(amountRaw), [amountRaw]);
@@ -217,10 +210,12 @@ export function TransactionForm({
           </AnimatePresence>
         </div>
 
-        {/* Date chips + AC button (clear amount) — PRD user feedback #3 */}
-        <div className="px-4 pb-3 flex gap-2 items-center">
+        {/* Date chips + AC button (clear amount) — PRD user feedback #3
+            AC is now a pill-shaped button (larger, easier to tap, but
+            still subtle enough to not dominate the chip row). */}
+        <div className="px-4 pb-3 flex gap-2 items-center flex-wrap">
           <DateChip
-            active={dateISO === todayISO}
+            active={dateISO === todayISO && !showDatePicker}
             onClick={() => {
               setDateISO(todayISO);
               setShowDatePicker(false);
@@ -229,7 +224,7 @@ export function TransactionForm({
             امروز
           </DateChip>
           <DateChip
-            active={dateISO === yesterdayISO}
+            active={dateISO === yesterdayISO && !showDatePicker}
             onClick={() => {
               setDateISO(yesterdayISO);
               setShowDatePicker(false);
@@ -243,67 +238,108 @@ export function TransactionForm({
           >
             <Calendar size={14} strokeWidth={2.5} />
             <span className="mr-1">
-              {dateISO !== todayISO && dateISO !== yesterdayISO
-                ? formatJalaliLong(dateISO, digits)
-                : 'انتخاب تاریخ'}
+              {showDatePicker
+                ? 'ورود مبلغ'
+                : dateISO !== todayISO && dateISO !== yesterdayISO
+                  ? formatJalaliLong(dateISO, digits)
+                  : 'انتخاب تاریخ'}
             </span>
           </DateChip>
 
-          {/* AC button — clears the entire amount. Sits at the end of
-              the chip row, visually distinct (danger tint). */}
+          {/* AC button — pill shape with text + icon. Larger than the
+              chips so it's easy to tap, but tinted danger so it doesn't
+              compete visually with the primary actions. Only shown when
+              there's an amount to clear. */}
           {amountRaw !== '' && (
             <motion.button
               type="button"
               onClick={() => setAmountRaw('')}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.92 }}
+              initial={{ opacity: 0, scale: 0.85, x: 8 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.85, x: 8 }}
+              whileTap={{ scale: 0.94 }}
               aria-label="پاک کردن مبلغ"
-              className="flex items-center justify-center w-8 h-8 rounded-full mr-auto pressable"
+              className="flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-medium mr-auto pressable"
               style={{
-                background: 'rgb(var(--danger) / 0.10)',
+                background: 'rgb(var(--danger) / 0.12)',
                 color: 'rgb(var(--danger))',
               }}
             >
               <Eraser size={14} strokeWidth={2.5} />
+              <span>پاک کردن</span>
             </motion.button>
           )}
         </div>
 
-        {/* Date picker — slides in when toggled */}
-        <AnimatePresence>
-          {showDatePicker && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="px-2 py-3 mx-4 mb-3 card">
-                <JalaliDatePicker
-                  value={dateISO}
-                  onChange={setDateISO}
+        {/* Swap zone: number pad OR date picker, never both at once.
+            When the user taps "انتخاب تاریخ", the number pad animates
+            out (slide down + fade) and the date picker animates in
+            (slide up + fade) — they occupy the same slot, so the sheet
+            height doesn't change and nothing scrolls behind it.
+
+            PRD user feedback (this iteration): swap instead of stack. */}
+        <div className="relative">
+          <AnimatePresence mode="wait">
+            {showDatePicker ? (
+              <motion.div
+                key="date-picker"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 16 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {/* Date picker panel — fills the slot the number pad
+                    would have used. Larger height for 5 visible items
+                    (2 above + selected + 2 below) per Apple style. */}
+                <div className="mx-4 mb-3 card p-3">
+                  <JalaliDatePicker
+                    value={dateISO}
+                    onChange={setDateISO}
+                    digits={digits}
+                  />
+                </div>
+
+                {/* Confirm date button — mirrors the NumberPad's "تأیید"
+                    button position so the user's thumb stays in the
+                    same place. */}
+                <motion.button
+                  type="button"
+                  onClick={() => setShowDatePicker(false)}
+                  whileTap={{ scale: 0.97 }}
+                  className="w-full mx-4 mb-2 py-4 rounded-2xl font-medium text-base flex items-center justify-center gap-2"
+                  style={{
+                    background: 'rgb(var(--brand-primary))',
+                    color: 'white',
+                    width: 'calc(100% - 32px)',
+                  }}
+                >
+                  <Check size={18} strokeWidth={2.5} />
+                  تأیید تاریخ
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="number-pad"
+                initial={{ opacity: 0, y: -16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <NumberPad
+                  value={amountRaw}
+                  onChange={setAmountRaw}
+                  onDone={() => {
+                    if (canAdvanceToDetails) {
+                      setStage('details');
+                    }
+                  }}
+                  canDone={canAdvanceToDetails}
                   digits={digits}
                 />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* NumberPad with Done → advance to stage 2 */}
-        <NumberPad
-          value={amountRaw}
-          onChange={setAmountRaw}
-          onDone={() => {
-            if (canAdvanceToDetails) {
-              setStage('details');
-            }
-          }}
-          canDone={canAdvanceToDetails}
-          digits={digits}
-        />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     );
   }
