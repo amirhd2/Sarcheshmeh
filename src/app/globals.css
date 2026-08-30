@@ -64,9 +64,10 @@
   --color-danger: rgb(var(--danger) / <alpha-value>);
   --color-success: rgb(var(--success) / <alpha-value>);
 
-  /* Digit font slot — currently falls back to Vazirmatn; tomorrow we
-     point @font-face 'Digi' at the user's digit font (PRD §5). */
-  --font-digits: 'Digi', 'Vazirmatn', system-ui, sans-serif;
+  /* Digit font slot — currently uses Vazirmatn for digits.
+     Tomorrow we'll point @font-face 'Digi' at the user's preferred
+     digit font and switch this back to 'Digi', 'Vazirmatn', system-ui. */
+  --font-digits: 'Vazirmatn', system-ui, sans-serif;
 }
 
 /* -------------------------------------------------------------------------

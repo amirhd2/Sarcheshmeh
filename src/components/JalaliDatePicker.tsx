@@ -59,9 +59,15 @@ export function JalaliDatePicker({ value, onChange, digits }: JalaliDatePickerPr
   const parts: JalaliParts = useMemo(() => gregorianToJalaliParts(value), [value]);
 
   // Today for default + year range bounds
+  // PRD user feedback #2: years should not be limited. We use a wide
+  // range (1380..1450) so the picker works for long-term use without
+  // being truly infinite (which would hurt scroll performance).
+  // 1380 is well before any realistic transaction date; 1450 is ~50
+  // years in the future — more than enough for any planning use case.
+  // If needed, we can extend this range later without a migration.
   const today = useMemo(() => todayJalaliParts(), []);
-  const minYear = Math.min(1402, today.jy - 5);
-  const maxYear = today.jy + 2;
+  const minYear = 1380;
+  const maxYear = Math.max(today.jy + 50, 1450);
 
   // Year items
   const yearItems = useMemo<WheelColumnItem<number>[]>(() => {

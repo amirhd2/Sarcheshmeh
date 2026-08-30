@@ -31,8 +31,8 @@
    ========================================================================= */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
-import { Check, ChevronRight, Calendar } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Check, ChevronRight, Calendar, Eraser } from 'lucide-react';
 import { NumberPad } from '@/components/NumberPad';
 import { JalaliDatePicker } from '@/components/JalaliDatePicker';
 import { IconRenderer } from '@/components/IconRenderer';
@@ -45,6 +45,7 @@ import {
   parseAmountInput,
   formatToman,
 } from '@lib/format';
+import { formatTomanWords } from '@lib/numberToWords';
 import {
   todayJalaliParts,
   jalaliToISO,
@@ -102,6 +103,19 @@ export function TransactionForm({
     initialTransaction?.destinationId ?? null,
   );
   const [note, setNote] = useState<string>(initialTransaction?.note ?? '');
+
+  // --- Lock body scroll when date picker is open ---
+  // PRD user feedback #5: when the wheel picker is shown, scrolling
+  // should be confined to the picker itself (overscroll-behavior:contain
+  // handles that) — and the body behind it should NOT scroll.
+  useEffect(() => {
+    if (!showDatePicker) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [showDatePicker]);
 
   // --- Derived ---
   const amountNumber = useMemo(() => parseAmountInput(amountRaw), [amountRaw]);
@@ -166,7 +180,7 @@ export function TransactionForm({
   if (stage === 'amount') {
     return (
       <div className="flex flex-col">
-        {/* Amount display — large, with live grouping */}
+        {/* Amount display — large, with live grouping + Persian words */}
         <div className="px-5 pt-2 pb-4 text-center">
           <div className="text-xs text-text-muted mb-2">مبلغ تراکنش</div>
           <div className="min-h-[64px] flex items-center justify-center">
@@ -186,46 +200,75 @@ export function TransactionForm({
               </motion.span>
             )}
           </div>
-          {amountNumber > 0 && (
-            <div className="text-xs text-text-muted mt-1">
-              {formatToman(amountNumber, digits)}
-            </div>
-          )}
+          {/* Amount in Persian words — PRD user feedback #4 */}
+          <AnimatePresence mode="wait">
+            {amountNumber > 0 && (
+              <motion.div
+                key={amountNumber}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
+                className="text-xs text-text-muted mt-2 leading-relaxed"
+              >
+                {formatTomanWords(amountNumber)}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Date chips */}
-        <div className="px-4 pb-3">
-          <div className="flex gap-2 items-center">
-            <DateChip
-              active={dateISO === todayISO}
-              onClick={() => {
-                setDateISO(todayISO);
-                setShowDatePicker(false);
+        {/* Date chips + AC button (clear amount) — PRD user feedback #3 */}
+        <div className="px-4 pb-3 flex gap-2 items-center">
+          <DateChip
+            active={dateISO === todayISO}
+            onClick={() => {
+              setDateISO(todayISO);
+              setShowDatePicker(false);
+            }}
+          >
+            امروز
+          </DateChip>
+          <DateChip
+            active={dateISO === yesterdayISO}
+            onClick={() => {
+              setDateISO(yesterdayISO);
+              setShowDatePicker(false);
+            }}
+          >
+            دیروز
+          </DateChip>
+          <DateChip
+            active={showDatePicker || (dateISO !== todayISO && dateISO !== yesterdayISO)}
+            onClick={() => setShowDatePicker((v) => !v)}
+          >
+            <Calendar size={14} strokeWidth={2.5} />
+            <span className="mr-1">
+              {dateISO !== todayISO && dateISO !== yesterdayISO
+                ? formatJalaliLong(dateISO, digits)
+                : 'انتخاب تاریخ'}
+            </span>
+          </DateChip>
+
+          {/* AC button — clears the entire amount. Sits at the end of
+              the chip row, visually distinct (danger tint). */}
+          {amountRaw !== '' && (
+            <motion.button
+              type="button"
+              onClick={() => setAmountRaw('')}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileTap={{ scale: 0.92 }}
+              aria-label="پاک کردن مبلغ"
+              className="flex items-center justify-center w-8 h-8 rounded-full mr-auto pressable"
+              style={{
+                background: 'rgb(var(--danger) / 0.10)',
+                color: 'rgb(var(--danger))',
               }}
             >
-              امروز
-            </DateChip>
-            <DateChip
-              active={dateISO === yesterdayISO}
-              onClick={() => {
-                setDateISO(yesterdayISO);
-                setShowDatePicker(false);
-              }}
-            >
-              دیروز
-            </DateChip>
-            <DateChip
-              active={showDatePicker || (dateISO !== todayISO && dateISO !== yesterdayISO)}
-              onClick={() => setShowDatePicker((v) => !v)}
-            >
-              <Calendar size={14} strokeWidth={2.5} />
-              <span className="mr-1">
-                {dateISO !== todayISO && dateISO !== yesterdayISO
-                  ? formatJalaliLong(dateISO, digits)
-                  : 'انتخاب تاریخ'}
-              </span>
-            </DateChip>
-          </div>
+              <Eraser size={14} strokeWidth={2.5} />
+            </motion.button>
+          )}
         </div>
 
         {/* Date picker — slides in when toggled */}
