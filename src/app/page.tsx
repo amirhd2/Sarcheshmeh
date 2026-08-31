@@ -20,6 +20,7 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { TransactionForm } from '@/features/transaction-form/TransactionForm';
 import { SeasonView } from '@/components/season/SeasonView';
 import { SettingsSheet } from '@/components/settings/SettingsSheet';
+import { AppSplash } from '@/components/AppSplash';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
 import { formatToman } from '@lib/format';
@@ -48,15 +49,20 @@ export default function HomePage() {
   // Settings sheet state
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Show loading screen until DB is ready
-  if (!ready || yearsLoading) {
-    return <LoadingScreen />;
-  }
+  // App is ready when DB is loaded and years are available
+  const isReady = ready && !yearsLoading;
 
   const yearsToShow = years.length > 0 ? years : [effectiveYear];
 
   return (
     <>
+      {/* In-app splash screen — shows for at least 1.5s on every load,
+          even after JS hydrates. Bridges the gap between the native
+          iOS/Android splash (which disappears instantly) and the app
+          being fully interactive. PRD user feedback: splash was too
+          short to see. */}
+      <AppSplash ready={isReady} />
+
       <main className="min-h-safe pb-24">
         <DashboardHeader
           years={yearsToShow}
