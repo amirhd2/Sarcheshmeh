@@ -1,15 +1,13 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — Dashboard (Phase 1 · Step 4 + 5)
+   سرچشمه — Dashboard + Season View (Phase 1 · Steps 4-8)
    =========================================================================
    The root page of the app. Shows:
-   - Header: app name + year switcher chip + settings icon
-   - Year total card with count-up animation
-   - 2×2 grid of season cards (1 column on mobile)
-   - FAB (bottom-left for RTL) → opens transaction form bottom sheet
+   - Dashboard: header + year total + season cards grid + FAB
+   - Season View: opens when a season card is tapped, with edge-swipe-back
 
-   PRD §6 page 1 (Dashboard) + §6 page 2 (Transaction Form).
+   PRD §6 page 1 (Dashboard) + §6 page 2 (Transaction Form) + §6 page 3 (Season).
    ========================================================================= */
 
 import { useMemo, useState } from 'react';
@@ -20,6 +18,7 @@ import { CountUp } from '@/components/dashboard/CountUp';
 import { Fab } from '@/components/dashboard/Fab';
 import { BottomSheet } from '@/components/BottomSheet';
 import { TransactionForm } from '@/features/transaction-form/TransactionForm';
+import { SeasonView } from '@/components/season/SeasonView';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
 import { formatToman } from '@lib/format';
@@ -42,6 +41,9 @@ export default function HomePage() {
   // FAB / bottom sheet state
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  // Season view state — null = dashboard, otherwise show that season
+  const [activeSeason, setActiveSeason] = useState<Season | null>(null);
+
   // Show loading screen until DB is ready
   if (!ready || yearsLoading) {
     return <LoadingScreen />;
@@ -50,73 +52,78 @@ export default function HomePage() {
   const yearsToShow = years.length > 0 ? years : [effectiveYear];
 
   return (
-    <main className="min-h-safe pb-24">
-      <DashboardHeader
-        years={yearsToShow}
-        selectedYear={effectiveYear}
-        onSelectYear={setSelectedYear}
-        digits={digits}
-      />
-
-      {/* Content container — responsive max-width:
-          - mobile: full width (max-w-2xl = 672px covers most phones)
-          - tablet (md+): max-w-4xl (896px) — uses more of the screen
-          - desktop (lg+): max-w-5xl (1024px) — fills wide screens
-          PRD user feedback: previously max-w-2xl on all sizes left
-          too much empty space on tablets/desktops. */}
-      <div className="px-4 space-y-4 max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto">
-        {/* Year total card with count-up */}
-        <YearTotalCard
-          totalAmount={summary.totalAmount}
-          totalCount={summary.totalCount}
-          isLoading={summaryLoading}
+    <>
+      <main className="min-h-safe pb-24">
+        <DashboardHeader
+          years={yearsToShow}
+          selectedYear={effectiveYear}
+          onSelectYear={setSelectedYear}
           digits={digits}
         />
 
-        {/* Season cards grid — responsive columns per PRD §6 + user feedback:
-            - mobile: 1 column (stacked)
-            - sm (640px+): 2 columns (2×2 grid) — PRD spec
-            - lg (1024px+): 4 columns (1×4 row) — uses desktop real estate
-              better than 2×2 which left cards too wide/stretched.
-            Cards also scale up padding/font on larger screens. */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
-          {SEASONS.map((season) => (
-            <SeasonCard
-              key={season}
-              season={season}
-              totalAmount={summary.seasons[season].totalAmount}
-              totalCount={summary.seasons[season].totalCount}
-              yearTotal={summary.totalAmount}
-              digits={digits}
-              onClick={() => {
-                // Phase 1 step 6: navigate to season page
-              }}
-            />
-          ))}
+        {/* Content container */}
+        <div className="px-4 space-y-4 max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto">
+          {/* Year total card with count-up */}
+          <YearTotalCard
+            totalAmount={summary.totalAmount}
+            totalCount={summary.totalCount}
+            isLoading={summaryLoading}
+            digits={digits}
+          />
+
+          {/* Season cards grid — tap to open season view */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
+            {SEASONS.map((season) => (
+              <SeasonCard
+                key={season}
+                season={season}
+                totalAmount={summary.seasons[season].totalAmount}
+                totalCount={summary.seasons[season].totalCount}
+                yearTotal={summary.totalAmount}
+                digits={digits}
+                onClick={() => setActiveSeason(season)}
+              />
+            ))}
+          </div>
+
+          {/* Hint */}
+          <p className="text-center text-xs text-text-faint pt-2">
+            مرحله ۸ — ژست برگشت از لبه آماده‌ست.
+          </p>
         </div>
 
-        {/* Hint that dashboard is interactive */}
-        <p className="text-center text-xs text-text-faint pt-2">
-          مرحله ۵ — فرم ثبت تراکنش آماده‌ست. دکمه‌ی + رو بزن.
-        </p>
-      </div>
-
-      <Fab
-        onAdd={() => setSheetOpen(true)}
-        isOpen={sheetOpen}
-      />
-
-      <BottomSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        title="تراکنش جدید"
-      >
-        <TransactionForm
-          dashboardYear={effectiveYear}
-          onSubmit={() => setSheetOpen(false)}
+        <Fab
+          onAdd={() => setSheetOpen(true)}
+          isOpen={sheetOpen}
         />
-      </BottomSheet>
-    </main>
+
+        <BottomSheet
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          title="تراکنش جدید"
+        >
+          <TransactionForm
+            dashboardYear={effectiveYear}
+            onSubmit={() => setSheetOpen(false)}
+          />
+        </BottomSheet>
+      </main>
+
+      {/* Season View — rendered when activeSeason is set.
+          Entry/exit animations are handled inside SeasonView via CSS
+          transitions so the edge-swipe gesture can directly control
+          the transform.
+          The `key` prop remounts the component when year/season changes,
+          which resets the filter state without needing useEffect. */}
+      {activeSeason && (
+        <SeasonView
+          key={`${activeSeason}-${effectiveYear}`}
+          year={effectiveYear}
+          season={activeSeason}
+          onBack={() => setActiveSeason(null)}
+        />
+      )}
+    </>
   );
 }
 
