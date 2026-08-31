@@ -126,7 +126,14 @@ export function generatePDFReport(data: PDFReportData): void {
     </table>
   </div>
   <div class="footer">این گزارش توسط اپلیکیشن سرچشمه تولید شده است.</div>
-  <script>window.onload = function() { window.print(); };</script>
+  <script>
+    window.onload = function() {
+      window.print();
+      // Close the print window after print dialog is dismissed.
+      // setTimeout ensures the print dialog has time to appear first.
+      setTimeout(function() { window.close(); }, 500);
+    };
+  </script>
 </body>
 </html>`;
 

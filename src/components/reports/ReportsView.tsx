@@ -22,6 +22,8 @@ import { db } from '@/db/schema';
 import { jalaliYearRange, jalaliMonth, JALALI_MONTHS_FA, faNum } from '@lib/jalali';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useEdgeSwipeBack } from '@/features/season/useEdgeSwipeBack';
+import { useAvailableYears } from '@/features/dashboard/useDashboardData';
+import { YearSwitcher } from '@/components/dashboard/YearSwitcher';
 import { formatCompact, formatToman } from '@lib/format';
 import { generatePDFReport } from '@/features/reports/pdfExport';
 
@@ -30,8 +32,11 @@ interface ReportsViewProps {
   onBack: () => void;
 }
 
-export function ReportsView({ year, onBack }: ReportsViewProps) {
+export function ReportsView({ year: initialYear, onBack }: ReportsViewProps) {
   const { digits } = useAppSettings();
+  const { years } = useAvailableYears();
+  const [selectedYear, setSelectedYear] = useState(initialYear);
+  const year = selectedYear;
   const [isExiting, setIsExiting] = useState(false);
   const [compareYear, setCompareYear] = useState(year - 1);
   const exitTimeoutRef = useRef<number | null>(null);
@@ -151,7 +156,14 @@ export function ReportsView({ year, onBack }: ReportsViewProps) {
             </button>
             <div className="flex-1">
               <h1 className="text-lg font-bold text-text">گزارش‌ها</h1>
-              <p className="text-xs text-text-muted">سال <span className="nums digits-font">{digits === 'fa' ? faNum(year) : year}</span></p>
+              <div className="flex items-center gap-2">
+                <YearSwitcher
+                  years={years.length > 0 ? years : [year]}
+                  selectedYear={year}
+                  onSelect={setSelectedYear}
+                  digits={digits}
+                />
+              </div>
             </div>
             {data && data.txs.length > 0 && (
               <button

@@ -1,45 +1,34 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — TypingLockBadge
+   سرچشمه — LockBadge
    =========================================================================
-   Shows a "سال قفل است" badge with a typing animation when a year
-   is locked. Used in the header of dashboard and season pages.
+   Shows a compact lock indicator when a year is locked.
+   On mobile: just a lock icon (no text — prevents horizontal overflow).
+   On desktop (sm+): icon + "سال قفل است" text.
    ========================================================================= */
 
-import { motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import { faNum } from '@lib/jalali';
 
-interface TypingLockBadgeProps {
+interface LockBadgeProps {
   year: number;
   digits: 'fa' | 'en';
 }
 
-export function LockBadge({ year, digits }: TypingLockBadgeProps) {
+export function LockBadge({ year, digits }: LockBadgeProps) {
   const yearStr = digits === 'fa' ? faNum(year) : String(year);
-  const message = `سال ${yearStr} قفل است`;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+    <div
+      className="flex items-center gap-1 px-2 py-0.5 rounded-full shrink-0"
       style={{
         background: 'rgb(var(--danger) / 0.10)',
         color: 'rgb(var(--danger))',
       }}
     >
-      <Lock size={12} strokeWidth={2.5} />
-      <motion.span
-        className="text-[11px] font-medium overflow-hidden whitespace-nowrap"
-        initial={{ width: 0 }}
-        animate={{ width: 'auto' }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-      >
-        {message}
-      </motion.span>
-    </motion.div>
+      <Lock size={11} strokeWidth={2.5} />
+      <span className="text-[10px] font-medium hidden sm:inline">سال {yearStr} قفل</span>
+    </div>
   );
 }
