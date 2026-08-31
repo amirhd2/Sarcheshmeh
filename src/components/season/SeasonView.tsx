@@ -20,7 +20,7 @@ import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { BottomSheet } from '@/components/BottomSheet';
 import { TransactionForm } from '@/features/transaction-form/TransactionForm';
 import type { Transaction } from '@/db/schema';
-import { SEASONS_FA, SEASON_MONTHS, JALALI_MONTHS_FA, jalaliMonth, type Season, type DigitPref } from '@lib/jalali';
+import { SEASONS_FA, SEASON_MONTHS, JALALI_MONTHS_FA, jalaliMonth, faNum, type Season, type DigitPref } from '@lib/jalali';
 import { formatToman } from '@lib/format';
 
 const SEASON_HEADER_COLORS: Record<Season, { light: string; dark: string }> = {
@@ -261,6 +261,3 @@ function FilterChip({ label, count, active, onClick, color, digits }: { label: s
   );
 }
 
-function faNum(n: number | string): string {
-  return String(n).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
-}

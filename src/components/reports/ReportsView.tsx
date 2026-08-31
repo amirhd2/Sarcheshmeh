@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
-import { jalaliYearRange, jalaliMonth, JALALI_MONTHS_FA } from '@lib/jalali';
+import { jalaliYearRange, jalaliMonth, JALALI_MONTHS_FA, faNum } from '@lib/jalali';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useEdgeSwipeBack } from '@/features/season/useEdgeSwipeBack';
 import { formatCompact, formatToman } from '@lib/format';
@@ -291,6 +291,3 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-function faNum(n: number): string {
-  return String(n).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
-}

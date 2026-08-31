@@ -32,7 +32,7 @@ import {
 import { CatalogManagementView } from './CatalogManagementView';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { jalaliYear, todayJalaliParts } from '@lib/jalali';
+import { jalaliYear, todayJalaliParts, faNum } from '@lib/jalali';
 
 interface SettingsSheetProps {
   open: boolean;

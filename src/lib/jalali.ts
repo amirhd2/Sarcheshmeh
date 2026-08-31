@@ -194,6 +194,11 @@ export function toPersianDigits(s: string | number): string {
   return String(s).replace(/[0-9]/g, (d) => FA_DIGITS[Number(d)] ?? d);
 }
 
+/** Convenience: convert a number to Persian digit string. */
+export function faNum(n: number): string {
+  return toPersianDigits(String(n));
+}
+
 export function toEnglishDigits(s: string | number): string {
   // Convert Persian + Arabic-Indic digits to ASCII
   return String(s)

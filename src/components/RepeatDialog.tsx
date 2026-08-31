@@ -23,7 +23,7 @@ import {
   jalaliToISO,
   JALALI_MONTHS_FA,
   type DigitPref,
-} from '@lib/jalali';
+  faNum } from '@lib/jalali';
 import { formatToman } from '@lib/format';
 
 interface RepeatDialogProps {
@@ -175,6 +175,3 @@ function CountChip({ active, onClick, label }: { active: boolean; onClick: () =>
   );
 }
 
-function faNum(n: number): string {
-  return String(n).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
-}

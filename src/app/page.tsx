@@ -25,7 +25,7 @@ import { AppSplash } from '@/components/AppSplash';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
 import { formatToman } from '@lib/format';
-import { todayJalaliParts, type Season } from '@lib/jalali';
+import { todayJalaliParts, faNum, type Season } from '@lib/jalali';
 
 const SEASONS: ReadonlyArray<Season> = ['spring', 'summer', 'autumn', 'winter'];
 
@@ -325,8 +325,4 @@ function DropIconLarge() {
       />
     </svg>
   );
-}
-
-function faNum(n: number): string {
-  return String(n).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
 }

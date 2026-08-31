@@ -1,4 +1,5 @@
 'use client';
+import { faNum } from '@lib/jalali';
 
 /* =========================================================================
    سرچشمه — CatalogManagementView
@@ -520,6 +521,3 @@ function DeleteTransferScreen({ item, count, alternatives, onConfirm, onCancel, 
   );
 }
 
-function faNum(n: number): string {
-  return String(n).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
-}

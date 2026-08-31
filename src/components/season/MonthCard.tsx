@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { CountUp } from '@/components/dashboard/CountUp';
 import { formatCompact } from '@lib/format';
-import { JALALI_MONTHS_FA, type DigitPref } from '@lib/jalali';
+import { JALALI_MONTHS_FA, faNum, type DigitPref } from '@lib/jalali';
 
 interface MonthCardProps {
   month: number;
@@ -33,6 +33,3 @@ export function MonthCard({ month, totalAmount, totalCount, digits, isActive = f
   );
 }
 
-function faNum(n: number): string {
-  return String(n).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
-}

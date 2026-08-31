@@ -26,7 +26,7 @@
 import { SeasonMotif } from './SeasonMotif';
 import { CountUp } from './CountUp';
 import { formatCompact, formatPercent } from '@lib/format';
-import { SEASONS_FA, SEASON_MONTHS, JALALI_MONTHS_FA, type Season, type DigitPref } from '@lib/jalali';
+import { SEASONS_FA, SEASON_MONTHS, JALALI_MONTHS_FA, faNum, type Season, type DigitPref } from '@lib/jalali';
 
 interface SeasonCardProps {
   season: Season;
@@ -118,6 +118,3 @@ export function SeasonCard({
   );
 }
 
-function faNum(n: number): string {
-  return String(n).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
-}
