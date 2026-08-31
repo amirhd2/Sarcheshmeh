@@ -11,7 +11,7 @@
    ========================================================================= */
 
 import { useMemo, useState } from 'react';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon, BarChart3 } from 'lucide-react';
 import { YearSwitcher } from '@/components/dashboard/YearSwitcher';
 import { SeasonCard } from '@/components/dashboard/SeasonCard';
 import { CountUp } from '@/components/dashboard/CountUp';
@@ -20,6 +20,7 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { TransactionForm } from '@/features/transaction-form/TransactionForm';
 import { SeasonView } from '@/components/season/SeasonView';
 import { SettingsSheet } from '@/components/settings/SettingsSheet';
+import { ReportsView } from '@/components/reports/ReportsView';
 import { AppSplash } from '@/components/AppSplash';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
@@ -49,6 +50,9 @@ export default function HomePage() {
   // Settings sheet state
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Reports view state
+  const [showReports, setShowReports] = useState(false);
+
   // App is ready when DB is loaded and years are available
   const isReady = ready && !yearsLoading;
 
@@ -70,6 +74,7 @@ export default function HomePage() {
           onSelectYear={setSelectedYear}
           digits={digits}
           onSettingsClick={() => setSettingsOpen(true)}
+          onReportsClick={() => setShowReports(true)}
         />
 
         {/* Content container */}
@@ -137,6 +142,11 @@ export default function HomePage() {
 
       {/* Settings sheet — opened from the header settings icon */}
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      {/* Reports view — opened from the header chart icon */}
+      {showReports && (
+        <ReportsView year={effectiveYear} onBack={() => setShowReports(false)} />
+      )}
     </>
   );
 }
@@ -149,12 +159,14 @@ function DashboardHeader({
   onSelectYear,
   digits,
   onSettingsClick,
+  onReportsClick,
 }: {
   years: ReadonlyArray<number>;
   selectedYear: number;
   onSelectYear: (y: number) => void;
   digits: 'fa' | 'en';
   onSettingsClick?: () => void;
+  onReportsClick?: () => void;
 }) {
   return (
     <header
@@ -184,6 +196,20 @@ function DashboardHeader({
           onSelect={onSelectYear}
           digits={digits}
         />
+        {onReportsClick && (
+          <button
+            type="button"
+            onClick={onReportsClick}
+            aria-label="گزارش‌ها"
+            className="w-9 h-9 rounded-full flex items-center justify-center pressable"
+            style={{
+              background: 'rgb(var(--surface-2))',
+              color: 'rgb(var(--text-muted))',
+            }}
+          >
+            <BarChart3 size={18} strokeWidth={2} />
+          </button>
+        )}
         <button
           type="button"
           aria-label="تنظیمات"
