@@ -26,6 +26,9 @@ import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
 import { formatToman } from '@lib/format';
 import { todayJalaliParts, faNum, type Season } from '@lib/jalali';
+import { useLockedYears } from '@/features/settings/useLockedYears';
+import { LockBadge } from '@/components/LockBadge';
+import { Lock } from 'lucide-react';
 
 const SEASONS: ReadonlyArray<Season> = ['spring', 'summer', 'autumn', 'winter'];
 
@@ -53,6 +56,10 @@ export default function HomePage() {
   // Reports view state
   const [showReports, setShowReports] = useState(false);
 
+  // Year lock state
+  const { isLocked } = useLockedYears();
+  const yearLocked = isLocked(effectiveYear);
+
   // App is ready when DB is loaded and years are available
   const isReady = ready && !yearsLoading;
 
@@ -75,6 +82,7 @@ export default function HomePage() {
           digits={digits}
           onSettingsClick={() => setSettingsOpen(true)}
           onReportsClick={() => setShowReports(true)}
+          isYearLocked={yearLocked}
         />
 
         {/* Content container */}
@@ -162,6 +170,7 @@ function DashboardHeader({
   digits,
   onSettingsClick,
   onReportsClick,
+  isYearLocked,
 }: {
   years: ReadonlyArray<number>;
   selectedYear: number;
@@ -169,6 +178,7 @@ function DashboardHeader({
   digits: 'fa' | 'en';
   onSettingsClick?: () => void;
   onReportsClick?: () => void;
+  isYearLocked: boolean;
 }) {
   return (
     <header
@@ -181,7 +191,7 @@ function DashboardHeader({
         paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
       }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <div
           className="w-8 h-8 rounded-2xl flex items-center justify-center"
           style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}
@@ -189,9 +199,19 @@ function DashboardHeader({
           <DropIconSmall />
         </div>
         <h1 className="text-lg font-bold text-text">سرچشمه</h1>
+        {isYearLocked && (
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center"
+            style={{ background: 'rgb(var(--danger) / 0.12)' }}
+            title="سال قفل است"
+          >
+            <Lock size={12} strokeWidth={2.5} style={{ color: 'rgb(var(--danger))' }} />
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
+        {isYearLocked && <LockBadge year={selectedYear} digits={digits} />}
         <YearSwitcher
           years={years}
           selectedYear={selectedYear}

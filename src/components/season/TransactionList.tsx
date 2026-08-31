@@ -6,6 +6,7 @@ import type { Transaction, Category, Destination } from '@/db/schema';
 import { TransactionRow } from './TransactionRow';
 import { formatJalaliMonthDay, weekdayNameFa, toPersianDigits, toEnglishDigits, type DigitPref, type Season } from '@lib/jalali';
 import { formatAmount } from '@lib/format';
+import { toast } from 'sonner';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -65,7 +66,8 @@ export function TransactionList({ transactions, categories, destinations, digits
             {group.items.map((tx, idx) => (
               <div key={tx.id}>
                 <TransactionRow transaction={tx} category={categoryMap.get(tx.categoryId)} destination={destinationMap.get(tx.destinationId)} digits={digits}
-                  onDelete={() => onDeleteTransaction?.(tx)} onEdit={() => onEditTransaction?.(tx)} />
+                  onDelete={onDeleteTransaction ? () => onDeleteTransaction(tx) : () => toast('این سال قفل است', { description: 'برای تغییر، ابتدا قفل سال رو در تنظیمات باز کن' })}
+                  onEdit={onEditTransaction ? () => onEditTransaction(tx) : () => toast('این سال قفل است', { description: 'برای تغییر، ابتدا قفل سال رو در تنظیمات باز کن' })} />
                 {idx < group.items.length - 1 && <div className="h-px mx-4" style={{ background: 'rgb(var(--text) / 0.06)' }} />}
               </div>
             ))}

@@ -15,6 +15,8 @@ import { useSeasonTransactions, useMonthSummaries } from '@/features/season/useS
 import { softDeleteTransaction, undoDeleteTransaction } from '@/features/season/transactionOps';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { useEdgeSwipeBack } from '@/features/season/useEdgeSwipeBack';
+import { LockBadge } from '@/components/LockBadge';
+import { Lock } from 'lucide-react';
 import { useCategories, useDestinations } from '@/features/transaction-form/useCatalogs';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -139,11 +141,24 @@ export function SeasonView({ year, season, onBack }: SeasonViewProps) {
               <ChevronRight size={20} strokeWidth={2.5} />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-bold text-text">{seasonName}</h1>
-              <p className="text-xs text-text-muted">
-                {JALALI_MONTHS_FA[SEASON_MONTHS[season][0] - 1]}–{JALALI_MONTHS_FA[SEASON_MONTHS[season][2] - 1]} ·{' '}
-                <span className="nums digits-font">{digits === 'fa' ? faNum(year) : year}</span>
-              </p>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold text-text">{seasonName}</h1>
+                {yearLocked && (
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ background: 'rgb(var(--danger) / 0.15)' }}
+                  >
+                    <Lock size={10} strokeWidth={2.5} style={{ color: 'rgb(var(--danger))' }} />
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-text-muted">
+                  {JALALI_MONTHS_FA[SEASON_MONTHS[season][0] - 1]}–{JALALI_MONTHS_FA[SEASON_MONTHS[season][2] - 1]} ·{' '}
+                  <span className="nums digits-font">{digits === 'fa' ? faNum(year) : year}</span>
+                </p>
+                {yearLocked && <LockBadge year={year} digits={digits} />}
+              </div>
             </div>
           </div>
         </header>
