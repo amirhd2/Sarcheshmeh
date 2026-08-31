@@ -162,8 +162,17 @@ export function SwipeRow({ children, onDelete, onEdit, disabled = false }: Swipe
       ds.isDragging = true; ds.directionLocked = false; ds.isHorizontal = false;
       ds.startX = getX(e); ds.startY = getY(e);
       ds.wrapperWidth = wrapper.offsetWidth;
-      ds.initialTranslate = ds.isOpen
-        ? (ds.openDirection === 'left' ? -ACTION_BTN_WIDTH : ACTION_BTN_WIDTH) : 0;
+      // Read the card's ACTUAL current position from its transform style.
+      // This is critical for two-step swipes: if the user released a
+      // half-swipe and the card is mid-snap-animation, the actual
+      // position might not match the "expected" open position yet.
+      // Using the real position ensures the second swipe continues
+      // smoothly from where the card actually IS, not from where it
+      // was "supposed to" be. PRD user feedback: "کارت یه لحظه سرجای
+      // خودش برمیگرده و بعد از اون به مسیرش ادامه میده".
+      const currentTransform = card.style.transform || '';
+      const match = currentTransform.match(/translate3d\((-?[\d.]+)px/);
+      ds.initialTranslate = match ? parseFloat(match[1]) : 0;
       card.classList.remove('swipe-card-animating');
       if (deleteBtnRef.current) deleteBtnRef.current.classList.remove('swipe-btn-animating');
       if (editBtnRef.current) editBtnRef.current.classList.remove('swipe-btn-animating');
