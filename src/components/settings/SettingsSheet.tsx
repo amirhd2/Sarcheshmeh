@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import { CatalogManagementView } from './CatalogManagementView';
 import { useLockedYears } from '@/features/settings/useLockedYears';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { jalaliYear, todayJalaliParts } from '@lib/jalali';
 
 interface SettingsSheetProps {
   open: boolean;
@@ -54,17 +56,15 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
   const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [showCatalogManagement, setShowCatalogManagement] = useState(false);
   const { lockedYears, toggleLock, isLocked } = useLockedYears();
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
 
-  // Load years only when the yearlock section is opened
-  async function loadYears() {
-    if (availableYears.length > 0) return;
+  // Load years via useLiveQuery instead of manual async loading
+  const availableYears = useLiveQuery(async () => {
     const txs = await db.transactions.filter((t) => !t.deletedAt).toArray();
     const yearSet = new Set<number>();
-    const { jalaliYear } = await import('@lib/jalali');
     for (const tx of txs) yearSet.add(jalaliYear(tx.date));
-    setAvailableYears([...yearSet].sort((a, b) => b - a));
-  }
+    if (yearSet.size === 0) yearSet.add(todayJalaliParts().jy);
+    return [...yearSet].sort((a, b) => b - a);
+  }, []) ?? [todayJalaliParts().jy];
 
   async function refreshDemoCount() {
     // Use filter (not where.equals) — boolean indexing is unreliable
@@ -211,7 +211,7 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
             icon={<Lock size={18} />}
             title="قفل سال"
             isOpen={openSection === 'yearlock'}
-            onToggle={() => { toggleSection('yearlock'); loadYears(); }}
+            onToggle={() => toggleSection('yearlock')}
           >
             <div className="py-2 space-y-2">
               <p className="text-xs text-text-muted leading-relaxed mb-2">
