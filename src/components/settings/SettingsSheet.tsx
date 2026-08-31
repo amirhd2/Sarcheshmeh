@@ -27,11 +27,13 @@ import { db } from '@/db/schema';
 import {
   Sun, Moon, Monitor, Download, Upload, FileText, Trash2,
   AlertTriangle, Info, ChevronDown, ChevronRight, Database, AlertCircle,
-  Lock, Unlock,
+  Lock, Unlock, User, Cloud, LogOut, RefreshCw,
 } from 'lucide-react';
 import { CatalogManagementView } from './CatalogManagementView';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useAuth } from '@/features/auth/AuthContext';
+import { syncAll } from '@/features/auth/sync';
 import { jalaliYear, todayJalaliParts, faNum } from '@lib/jalali';
 
 interface SettingsSheetProps {
@@ -44,6 +46,7 @@ type AccordionSection =
   | 'categories'
   | 'backup'
   | 'yearlock'
+  | 'account'
   | 'danger'
   | 'about'
   | null;
@@ -56,6 +59,20 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
   const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [showCatalogManagement, setShowCatalogManagement] = useState(false);
   const { lockedYears, toggleLock, isLocked } = useLockedYears();
+  const { user, signOut } = useAuth();
+  const [syncing, setSyncing] = useState(false);
+
+  async function handleSync() {
+    if (!user) return;
+    setSyncing(true);
+    try {
+      const result = await syncAll(user.id);
+      toast.success(`سینک شد — ${result.pushed} آیتم آپلود، ${result.pulled} آیتم دانلود`);
+    } catch {
+      toast.error('خطا در سینک');
+    }
+    setSyncing(false);
+  }
 
   // Load years via useLiveQuery instead of manual async loading
   const availableYears = useLiveQuery(async () => {
@@ -304,6 +321,62 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
                   پاک‌سازی کامل همه‌چیز
                 </button>
               </div>
+            </div>
+          </AccordionItem>
+
+          {/* Account & Sync */}
+          <AccordionItem
+            icon={<User size={18} />}
+            title="حساب و سینک"
+            isOpen={openSection === 'account'}
+            onToggle={() => toggleSection('account')}
+          >
+            <div className="py-2 space-y-3">
+              {user ? (
+                <>
+                  {/* User info */}
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgb(var(--surface-2))' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgb(var(--brand-primary) / 0.12)' }}>
+                      <User size={18} style={{ color: 'rgb(var(--brand-primary))' }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-text truncate">{user.email}</p>
+                      <p className="text-xs text-text-muted">وارد شده</p>
+                    </div>
+                  </div>
+
+                  {/* Sync button */}
+                  <button
+                    type="button"
+                    onClick={handleSync}
+                    disabled={syncing}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium pressable"
+                    style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
+                  >
+                    <RefreshCw size={16} strokeWidth={2.5} className={syncing ? 'animate-spin' : ''} />
+                    {syncing ? 'در حال سینک...' : 'سینک دستی'}
+                  </button>
+
+                  {/* Sign out */}
+                  <button
+                    type="button"
+                    onClick={async () => { await signOut(); }}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium pressable"
+                    style={{ background: 'rgb(var(--danger) / 0.10)', color: 'rgb(var(--danger))' }}
+                  >
+                    <LogOut size={16} strokeWidth={2.5} />
+                    خروج از حساب
+                  </button>
+
+                  <p className="text-xs text-text-muted text-center leading-relaxed">
+                    داده‌ها به‌صورت خودکار سینک می‌شن. دکمه «سینک دستی» برای سینک فوری.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-text-muted text-center py-2">
+                  برای سینک داده‌ها بین دستگاه‌ها، باید وارد حساب بشی.
+                </p>
+              )}
             </div>
           </AccordionItem>
 
