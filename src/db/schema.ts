@@ -74,6 +74,7 @@ export interface Settings {
   unit: 'toman'; // future: rial
   sampleDataLoaded: boolean; // true after first-run seed completes
   schemaVersion: number;
+  lockedYears: number[]; // Jalali years that are locked (no edit/delete)
   updatedAt: string;
 }
 

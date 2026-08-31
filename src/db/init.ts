@@ -38,9 +38,20 @@ export async function initDatabase(): Promise<Settings> {
       unit: 'toman',
       sampleDataLoaded: false,
       schemaVersion: SCHEMA_VERSION,
+      lockedYears: [],
       updatedAt: now,
     };
     await db.settings.put(settings);
+  }
+
+  // 1b. Migration: ensure lockedYears exists (for databases created
+  // before Phase 3). If missing, add it with an empty array.
+  if (!settings.lockedYears) {
+    settings.lockedYears = [];
+    await db.settings.put({
+      ...settings,
+      updatedAt: new Date().toISOString(),
+    });
   }
 
   // 2. Ensure default categories exist (only if the table is empty)

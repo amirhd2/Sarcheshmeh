@@ -27,8 +27,10 @@ import { db } from '@/db/schema';
 import {
   Sun, Moon, Monitor, Download, Upload, FileText, Trash2,
   AlertTriangle, Info, ChevronDown, ChevronRight, Database, AlertCircle,
+  Lock, Unlock,
 } from 'lucide-react';
 import { CatalogManagementView } from './CatalogManagementView';
+import { useLockedYears } from '@/features/settings/useLockedYears';
 
 interface SettingsSheetProps {
   open: boolean;
@@ -39,6 +41,7 @@ type AccordionSection =
   | 'appearance'
   | 'categories'
   | 'backup'
+  | 'yearlock'
   | 'danger'
   | 'about'
   | null;
@@ -50,6 +53,18 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
   const [showWipeModal, setShowWipeModal] = useState(false);
   const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [showCatalogManagement, setShowCatalogManagement] = useState(false);
+  const { lockedYears, toggleLock, isLocked } = useLockedYears();
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+
+  // Load years only when the yearlock section is opened
+  async function loadYears() {
+    if (availableYears.length > 0) return;
+    const txs = await db.transactions.filter((t) => !t.deletedAt).toArray();
+    const yearSet = new Set<number>();
+    const { jalaliYear } = await import('@lib/jalali');
+    for (const tx of txs) yearSet.add(jalaliYear(tx.date));
+    setAvailableYears([...yearSet].sort((a, b) => b - a));
+  }
 
   async function refreshDemoCount() {
     // Use filter (not where.equals) — boolean indexing is unreliable
@@ -188,6 +203,49 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
                 <input type="file" accept=".json,application/json" onChange={handleRestoreFile} className="hidden" />
               </label>
               <SettingButton onClick={handleExportCSV} icon={<FileText size={16} />} label="خروجی CSV" />
+            </div>
+          </AccordionItem>
+
+          {/* Year locking */}
+          <AccordionItem
+            icon={<Lock size={18} />}
+            title="قفل سال"
+            isOpen={openSection === 'yearlock'}
+            onToggle={() => { toggleSection('yearlock'); loadYears(); }}
+          >
+            <div className="py-2 space-y-2">
+              <p className="text-xs text-text-muted leading-relaxed mb-2">
+                با قفل کردن یه سال، تراکنش‌های اون سال قابل ویرایش یا حذف نیستن. برای جلوگیری از تغییرات اشتباهی در سال‌های گذشته.
+              </p>
+              {availableYears.map((y) => {
+                const locked = isLocked(y);
+                return (
+                  <button
+                    key={y}
+                    type="button"
+                    onClick={() => toggleLock(y)}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl pressable transition-colors"
+                    style={{
+                      background: locked ? 'rgb(var(--danger) / 0.08)' : 'rgb(var(--surface-2))',
+                    }}
+                  >
+                    {locked ? (
+                      <Lock size={16} style={{ color: 'rgb(var(--danger))' }} />
+                    ) : (
+                      <Unlock size={16} className="text-text-muted" />
+                    )}
+                    <span className="flex-1 text-sm text-text text-right nums digits-font">
+                      {digits === 'fa' ? faNum(y) : y}
+                    </span>
+                    <span
+                      className="text-xs font-medium"
+                      style={{ color: locked ? 'rgb(var(--danger))' : 'rgb(var(--text-muted))' }}
+                    >
+                      {locked ? 'قفل‌شده' : 'باز'}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </AccordionItem>
 

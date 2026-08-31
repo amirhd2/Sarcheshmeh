@@ -10,7 +10,7 @@
    PRD §6 page 1 (Dashboard) + §6 page 2 (Transaction Form) + §6 page 3 (Season).
    ========================================================================= */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, lazy, Suspense } from 'react';
 import { Settings as SettingsIcon, BarChart3 } from 'lucide-react';
 import { YearSwitcher } from '@/components/dashboard/YearSwitcher';
 import { SeasonCard } from '@/components/dashboard/SeasonCard';
@@ -20,7 +20,7 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { TransactionForm } from '@/features/transaction-form/TransactionForm';
 import { SeasonView } from '@/components/season/SeasonView';
 import { SettingsSheet } from '@/components/settings/SettingsSheet';
-import { ReportsView } from '@/components/reports/ReportsView';
+const ReportsView = lazy(() => import('@/components/reports/ReportsView').then(m => ({ default: m.ReportsView })));
 import { AppSplash } from '@/components/AppSplash';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
@@ -143,9 +143,11 @@ export default function HomePage() {
       {/* Settings sheet — opened from the header settings icon */}
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      {/* Reports view — opened from the header chart icon */}
+      {/* Reports view — lazy loaded to avoid loading recharts on initial page load */}
       {showReports && (
-        <ReportsView year={effectiveYear} onBack={() => setShowReports(false)} />
+        <Suspense fallback={null}>
+          <ReportsView year={effectiveYear} onBack={() => setShowReports(false)} />
+        </Suspense>
       )}
     </>
   );

@@ -13,6 +13,7 @@ import { MonthCard } from '@/components/season/MonthCard';
 import { TransactionList } from '@/components/season/TransactionList';
 import { useSeasonTransactions, useMonthSummaries } from '@/features/season/useSeasonData';
 import { softDeleteTransaction, undoDeleteTransaction } from '@/features/season/transactionOps';
+import { useLockedYears } from '@/features/settings/useLockedYears';
 import { useEdgeSwipeBack } from '@/features/season/useEdgeSwipeBack';
 import { useCategories, useDestinations } from '@/features/transaction-form/useCatalogs';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
@@ -47,6 +48,8 @@ export function SeasonView({ year, season, onBack }: SeasonViewProps) {
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [isExiting, setIsExiting] = useState(false);
   const exitTimeoutRef = useRef<number | null>(null);
+  const { isLocked } = useLockedYears();
+  const yearLocked = isLocked(year);
 
   useEffect(() => {
     return () => { if (exitTimeoutRef.current) window.clearTimeout(exitTimeoutRef.current); };
@@ -202,7 +205,8 @@ export function SeasonView({ year, season, onBack }: SeasonViewProps) {
           </div>
         ) : totalCount > 0 ? (
           <TransactionList transactions={filteredTransactions} categories={categories} destinations={destinations} digits={digits} season={season}
-            onDeleteTransaction={handleDelete} onEditTransaction={handleEdit} />
+            onDeleteTransaction={yearLocked ? undefined : handleDelete}
+            onEditTransaction={yearLocked ? undefined : handleEdit} />
         ) : transactions.length > 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
             <div className="text-3xl mb-3">🔍</div>

@@ -39,6 +39,7 @@ import { IconRenderer } from '@/components/IconRenderer';
 import { BottomSheet } from '@/components/BottomSheet';
 import { CatalogForm, type CatalogFormData } from '@/components/settings/CatalogForm';
 import { RepeatDialog } from '@/components/RepeatDialog';
+import { NoteInput } from '@/components/NoteInput';
 import { useCategories, useDestinations } from './useCatalogs';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useHorizontalDragScroll } from '@lib/useHorizontalDragScroll';
@@ -481,21 +482,10 @@ export function TransactionForm({
         </div>
       </div>
 
-      {/* Note input */}
+      {/* Note input with autocomplete */}
       <div>
         <label className="block text-sm font-medium text-text mb-2">توضیح (اختیاری)</label>
-        <input
-          type="text"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="مثلاً: اضافه‌کاری فروردین"
-          maxLength={100}
-          className="w-full px-4 py-3 rounded-2xl text-sm outline-none transition-colors"
-          style={{
-            background: 'rgb(var(--surface-2))',
-            color: 'rgb(var(--text))',
-          }}
-        />
+        <NoteInput value={note} onChange={setNote} />
       </div>
 
       {/* Action buttons — submit + repeat */}
