@@ -32,12 +32,14 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
-import { Check, ChevronRight, Calendar, Eraser } from 'lucide-react';
+import { Check, ChevronRight, Calendar, Eraser, Plus } from 'lucide-react';
 import { NumberPad } from '@/components/NumberPad';
 import { JalaliDatePicker } from '@/components/JalaliDatePicker';
 import { IconRenderer } from '@/components/IconRenderer';
 import { useCategories, useDestinations } from './useCatalogs';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
+import { useHorizontalDragScroll } from '@lib/useHorizontalDragScroll';
+import { CatalogManagementView } from '@/components/settings/CatalogManagementView';
 import { db } from '@/db/schema';
 import type { Transaction } from '@/db/schema';
 import {
@@ -82,6 +84,9 @@ export function TransactionForm({
   const { digits } = useAppSettings();
   const categories = useCategories() ?? [];
   const destinations = useDestinations() ?? [];
+  const categoryScrollRef = useHorizontalDragScroll<HTMLDivElement>();
+  const destinationScrollRef = useHorizontalDragScroll<HTMLDivElement>();
+  const [showCatalogManagement, setShowCatalogManagement] = useState(false);
 
   // --- Stage state ---
   const [stage, setStage] = useState<Stage>('amount');
@@ -385,10 +390,10 @@ export function TransactionForm({
         </span>
       </div>
 
-      {/* Category chips */}
+      {/* Category chips — drag to scroll + add button at end */}
       <div>
         <label className="block text-sm font-medium text-text mb-2">دسته</label>
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+        <div ref={categoryScrollRef} className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1" style={{ cursor: 'grab' }}>
           {categories.map((cat) => {
             const active = cat.id === categoryId;
             return (
@@ -396,7 +401,7 @@ export function TransactionForm({
                 key={cat.id}
                 type="button"
                 onClick={() => setCategoryId(cat.id)}
-                className="flex items-center gap-2 px-3 py-2 rounded-2xl text-sm whitespace-nowrap pressable transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-2xl text-sm whitespace-nowrap pressable transition-colors shrink-0"
                 style={{
                   background: active ? cat.color : 'rgb(var(--surface-2))',
                   color: active ? 'white' : 'rgb(var(--text))',
@@ -412,13 +417,26 @@ export function TransactionForm({
               </button>
             );
           })}
+          {/* Add new category button — at the end of the list */}
+          <button
+            type="button"
+            onClick={() => setShowCatalogManagement(true)}
+            className="flex items-center justify-center w-10 h-10 rounded-2xl pressable shrink-0"
+            style={{
+              background: 'rgb(var(--brand-primary) / 0.10)',
+              color: 'rgb(var(--brand-primary))',
+            }}
+            aria-label="افزودن دسته جدید"
+          >
+            <Plus size={18} strokeWidth={2.5} />
+          </button>
         </div>
       </div>
 
-      {/* Destination chips */}
+      {/* Destination chips — drag to scroll + add button at end */}
       <div>
         <label className="block text-sm font-medium text-text mb-2">مقصد</label>
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+        <div ref={destinationScrollRef} className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1" style={{ cursor: 'grab' }}>
           {destinations.map((dst) => {
             const active = dst.id === destinationId;
             return (
@@ -426,7 +444,7 @@ export function TransactionForm({
                 key={dst.id}
                 type="button"
                 onClick={() => setDestinationId(dst.id)}
-                className="flex items-center gap-2 px-3 py-2 rounded-2xl text-sm whitespace-nowrap pressable transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-2xl text-sm whitespace-nowrap pressable transition-colors shrink-0"
                 style={{
                   background: active ? dst.color : 'rgb(var(--surface-2))',
                   color: active ? 'white' : 'rgb(var(--text))',
@@ -442,6 +460,19 @@ export function TransactionForm({
               </button>
             );
           })}
+          {/* Add new destination button */}
+          <button
+            type="button"
+            onClick={() => setShowCatalogManagement(true)}
+            className="flex items-center justify-center w-10 h-10 rounded-2xl pressable shrink-0"
+            style={{
+              background: 'rgb(var(--brand-primary) / 0.10)',
+              color: 'rgb(var(--brand-primary))',
+            }}
+            aria-label="افزودن مقصد جدید"
+          >
+            <Plus size={18} strokeWidth={2.5} />
+          </button>
         </div>
       </div>
 
@@ -479,6 +510,11 @@ export function TransactionForm({
         <Check size={18} strokeWidth={2.5} />
         ثبت تراکنش
       </motion.button>
+
+      {/* Catalog Management — opened from the + button in chips */}
+      {showCatalogManagement && (
+        <CatalogManagementView onBack={() => setShowCatalogManagement(false)} />
+      )}
     </div>
   );
 }

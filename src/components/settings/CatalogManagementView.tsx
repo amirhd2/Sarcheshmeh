@@ -164,7 +164,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
   // --- Render ---
   if (subView === 'add') {
     return (
-      <CatalogScreenWrapper title={tab === 'categories' ? 'دسته جدید' : 'مقصد جدید'} onBack={handleBack}>
+      <CatalogScreenWrapper title={tab === 'categories' ? 'دسته جدید' : 'مقصد جدید'} onBack={handleBack} direction="forward">
         <CatalogForm type={tab === 'categories' ? 'category' : 'destination'} onSubmit={handleAdd} onCancel={() => setSubView('list')} />
       </CatalogScreenWrapper>
     );
@@ -174,7 +174,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
     const item = currentItems.find((i) => i.id === editingId);
     if (item) {
       return (
-        <CatalogScreenWrapper title="ویرایش" onBack={handleBack}>
+        <CatalogScreenWrapper title="ویرایش" onBack={handleBack} direction="forward">
           <CatalogForm
             type={tab === 'categories' ? 'category' : 'destination'}
             initialData={{ name: item.name, icon: item.icon, color: item.color }}
@@ -188,14 +188,16 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
 
   if (subView === 'delete' && deletingItem) {
     return (
-      <DeleteTransferScreen
-        item={deletingItem}
-        count={deleteCount}
-        alternatives={currentItems.filter((i) => i.id !== deletingItem.id)}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => { setSubView('list'); setDeletingItem(null); }}
-        digits={digits}
-      />
+      <CatalogScreenWrapper title="حذف" onBack={handleBack} direction="forward">
+        <DeleteTransferScreen
+          item={deletingItem}
+          count={deleteCount}
+          alternatives={currentItems.filter((i) => i.id !== deletingItem.id)}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => { setSubView('list'); setDeletingItem(null); }}
+          digits={digits}
+        />
+      </CatalogScreenWrapper>
     );
   }
 
@@ -280,9 +282,10 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
 
 /* ------------------------------------------------------------------------- */
 
-function CatalogScreenWrapper({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) {
+function CatalogScreenWrapper({ title, onBack, children, direction = 'forward' }: { title: string; onBack: () => void; children: React.ReactNode; direction?: 'forward' | 'backward' }) {
+  const animClass = direction === 'forward' ? 'catalog-sub-enter' : 'catalog-sub-back';
   return (
-    <div className="catalog-sub-enter fixed inset-0 z-40 overflow-y-auto no-scrollbar" style={{ background: 'rgb(var(--bg))', willChange: 'transform' }}>
+    <div className={`${animClass} fixed inset-0 z-40 overflow-y-auto no-scrollbar`} style={{ background: 'rgb(var(--bg))', willChange: 'transform' }}>
       <style>{`
         @keyframes catalog-sub-enter {
           from { transform: translate3d(100%, 0, 0); opacity: 0.5; }
@@ -290,6 +293,13 @@ function CatalogScreenWrapper({ title, onBack, children }: { title: string; onBa
         }
         .catalog-sub-enter {
           animation: catalog-sub-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes catalog-sub-back {
+          from { transform: translate3d(-100%, 0, 0); opacity: 0.5; }
+          to { transform: translate3d(0, 0, 0); opacity: 1; }
+        }
+        .catalog-sub-back {
+          animation: catalog-sub-back 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
       `}</style>
       <div className="sticky top-0 z-30 w-full" style={{ background: 'rgb(var(--bg))' }}>
