@@ -28,11 +28,14 @@ import { formatToman } from '@lib/format';
 import { todayJalaliParts, faNum, type Season } from '@lib/jalali';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { LockBadge } from '@/components/LockBadge';
+import { useAuth } from '@/features/auth/AuthContext';
+import { AuthScreen } from '@/features/auth/AuthScreen';
 
 const SEASONS: ReadonlyArray<Season> = ['spring', 'summer', 'autumn', 'winter'];
 
 export default function HomePage() {
   const { ready, digits } = useAppSettings();
+  const { user, loading: authLoading } = useAuth();
   const { years, currentYear, isLoading: yearsLoading } = useAvailableYears();
 
   // Default to current jalali year if no data exists yet
@@ -61,6 +64,21 @@ export default function HomePage() {
 
   // App is ready when DB is loaded and years are available
   const isReady = ready && !yearsLoading;
+
+  // Show splash while loading auth or DB
+  if (authLoading || !ready || yearsLoading) {
+    return (
+      <>
+        <AppSplash ready={isReady && !authLoading} />
+        {authLoading && <LoadingScreen />}
+      </>
+    );
+  }
+
+  // Show auth screen if not signed in
+  if (!user) {
+    return <AuthScreen />;
+  }
 
   const yearsToShow = years.length > 0 ? years : [effectiveYear];
 
