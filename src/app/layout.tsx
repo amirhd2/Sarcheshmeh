@@ -1,15 +1,22 @@
 import type { Metadata, Viewport } from 'next';
-import { Vazirmatn } from 'next/font/google';
+import localFont from 'next/font/local';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { AppSettingsProvider } from '@/features/dashboard/AppSettingsContext';
 import './globals.css';
 
-const vazirmatn = Vazirmatn({
-  subsets: ['arabic', 'latin'],
+// Self-hosted Vazirmatn font — works offline without Google Fonts CDN
+const vazirmatn = localFont({
+  src: [
+    { path: '../../public/fonts/Vazirmatn-Light.woff2', weight: '300', style: 'normal' },
+    { path: '../../public/fonts/Vazirmatn-Regular.woff2', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/Vazirmatn-Medium.woff2', weight: '500', style: 'normal' },
+    { path: '../../public/fonts/Vazirmatn-SemiBold.woff2', weight: '600', style: 'normal' },
+    { path: '../../public/fonts/Vazirmatn-Bold.woff2', weight: '700', style: 'normal' },
+    { path: '../../public/fonts/Vazirmatn-ExtraBold.woff2', weight: '800', style: 'normal' },
+  ],
   variable: '--font-vazirmatn',
   display: 'swap',
-  weight: ['300', '400', '500', '600', '700', '800'],
 });
 
 export const metadata: Metadata = {
@@ -105,6 +112,20 @@ export default function RootLayout({
             media={splash.media}
           />
         ))}
+        {/* Service Worker registration — enables full offline support */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function(e) {
+                    console.warn('SW registration failed:', e);
+                  });
+                });
+              }
+            `,
+          }}
+        />
       </head>
       <body className={`${vazirmatn.variable} antialiased`}>
         <AppSettingsProvider>
