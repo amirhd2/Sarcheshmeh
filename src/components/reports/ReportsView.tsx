@@ -11,7 +11,8 @@
    ========================================================================= */
 
 import { useState, useMemo, useRef } from 'react';
-import { ChevronRight, BarChart3 } from 'lucide-react';
+import { ChevronRight, BarChart3, FileDown } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
   PieChart, Pie, Cell,
@@ -22,6 +23,7 @@ import { jalaliYearRange, jalaliMonth, JALALI_MONTHS_FA, faNum } from '@lib/jala
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useEdgeSwipeBack } from '@/features/season/useEdgeSwipeBack';
 import { formatCompact, formatToman } from '@lib/format';
+import { generatePDFReport } from '@/features/reports/pdfExport';
 
 interface ReportsViewProps {
   year: number;
@@ -151,6 +153,29 @@ export function ReportsView({ year, onBack }: ReportsViewProps) {
               <h1 className="text-lg font-bold text-text">گزارش‌ها</h1>
               <p className="text-xs text-text-muted">سال <span className="nums digits-font">{digits === 'fa' ? faNum(year) : year}</span></p>
             </div>
+            {data && data.txs.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  generatePDFReport({
+                    year,
+                    transactions: data.txs,
+                    categories: data.cats,
+                    destinations: data.dsts,
+                    digits,
+                  });
+                  toast.success('گزارش PDF آماده شد');
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-medium pressable shrink-0"
+                style={{
+                  background: 'rgb(var(--brand-primary) / 0.10)',
+                  color: 'rgb(var(--brand-primary))',
+                }}
+              >
+                <FileDown size={16} strokeWidth={2.5} />
+                <span className="hidden sm:inline">خروجی PDF</span>
+              </button>
+            )}
           </div>
         </header>
       </div>
