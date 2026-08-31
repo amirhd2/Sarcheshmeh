@@ -163,7 +163,7 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
             <div className="py-2">
               <button
                 type="button"
-                onClick={() => { setShowCatalogManagement(true); }}
+                onClick={() => { onClose(); setShowCatalogManagement(true); }}
                 className="w-full flex items-center justify-between px-4 py-3 rounded-2xl pressable"
                 style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
               >

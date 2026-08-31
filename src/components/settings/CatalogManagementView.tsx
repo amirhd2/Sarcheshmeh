@@ -9,12 +9,12 @@
    - Add / Edit / Delete (with transfer modal)
    ========================================================================= */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   DndContext, closestCenter, type DragEndEvent,
-  TouchSensor, useSensor, useSensors,
+  TouchSensor, MouseSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
 import {
   SortableContext, verticalListSortingStrategy, useSortable,
@@ -41,15 +41,38 @@ interface CatalogManagementViewProps {
 }
 
 type TabType = 'categories' | 'destinations';
-type Mode = 'list' | 'add' | 'edit' | 'delete';
 
 export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
   const { digits } = useAppSettings();
   const [tab, setTab] = useState<TabType>('categories');
-  const [mode, setMode] = useState<Mode>('list');
+  const [isExiting, setIsExiting] = useState(false);
+  const [subView, setSubView] = useState<'list' | 'add' | 'edit' | 'delete'>('list');
+  const exitTimeoutRef = useRef<number | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingItem, setDeletingItem] = useState<Category | Destination | null>(null);
   const [deleteCount, setDeleteCount] = useState(0);
+
+  // dnd-kit sensors — TouchSensor for mobile, MouseSensor for desktop
+  const sensors = useSensors(
+    useSensor(TouchSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  // Handle back with exit animation
+  const handleBack = () => {
+    if (subView !== 'list') {
+      setSubView('list');
+      setEditingId(null);
+      setDeletingItem(null);
+      return;
+    }
+    // Exit the whole view with animation
+    if (isExiting) return;
+    setIsExiting(true);
+    exitTimeoutRef.current = window.setTimeout(() => {
+      onBack();
+    }, 300);
+  };
 
   // Live query for categories and destinations
   const categories = useLiveQuery(async () => {
@@ -63,20 +86,6 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
   }, []) ?? [];
 
   const currentItems = tab === 'categories' ? categories : destinations;
-
-  // dnd-kit sensors
-  const sensors = useSensors(
-    useSensor(TouchSensor, { activationConstraint: { distance: 8 } }),
-  );
-
-  function handleBack() {
-    if (mode !== 'list') {
-      setMode('list');
-      setEditingId(null);
-    } else {
-      onBack();
-    }
-  }
 
   // --- Drag end handler ---
   function handleDragEnd(event: DragEndEvent) {
@@ -103,7 +112,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
         await addDestination(data);
       }
       toast.success(`${tab === 'categories' ? 'دسته' : 'مقصد'} جدید اضافه شد`);
-      setMode('list');
+      setSubView('list');
     } catch {
       toast.error('خطا در افزودن');
     }
@@ -119,7 +128,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
         await updateDestination(editingId, data);
       }
       toast.success('تغییرات ذخیره شد');
-      setMode('list');
+      setSubView('list');
       setEditingId(null);
     } catch {
       toast.error('خطا در ذخیره');
@@ -133,7 +142,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
       : await getDestinationTransactionCount(item.id);
     setDeleteCount(count);
     setDeletingItem(item);
-    setMode('delete');
+    setSubView('delete');
   }
 
   async function handleDeleteConfirm(transferToId?: string) {
@@ -145,7 +154,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
         await deleteDestination(deletingItem.id, transferToId);
       }
       toast.success('حذف شد');
-      setMode('list');
+      setSubView('list');
       setDeletingItem(null);
     } catch {
       toast.error('خطا در حذف');
@@ -153,15 +162,15 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
   }
 
   // --- Render ---
-  if (mode === 'add') {
+  if (subView === 'add') {
     return (
       <CatalogScreenWrapper title={tab === 'categories' ? 'دسته جدید' : 'مقصد جدید'} onBack={handleBack}>
-        <CatalogForm type={tab === 'categories' ? 'category' : 'destination'} onSubmit={handleAdd} onCancel={() => setMode('list')} />
+        <CatalogForm type={tab === 'categories' ? 'category' : 'destination'} onSubmit={handleAdd} onCancel={() => setSubView('list')} />
       </CatalogScreenWrapper>
     );
   }
 
-  if (mode === 'edit' && editingId) {
+  if (subView === 'edit' && editingId) {
     const item = currentItems.find((i) => i.id === editingId);
     if (item) {
       return (
@@ -170,21 +179,21 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
             type={tab === 'categories' ? 'category' : 'destination'}
             initialData={{ name: item.name, icon: item.icon, color: item.color }}
             onSubmit={handleEdit}
-            onCancel={() => { setMode('list'); setEditingId(null); }}
+            onCancel={() => { setSubView('list'); setEditingId(null); }}
           />
         </CatalogScreenWrapper>
       );
     }
   }
 
-  if (mode === 'delete' && deletingItem) {
+  if (subView === 'delete' && deletingItem) {
     return (
       <DeleteTransferScreen
         item={deletingItem}
         count={deleteCount}
         alternatives={currentItems.filter((i) => i.id !== deletingItem.id)}
         onConfirm={handleDeleteConfirm}
-        onCancel={() => { setMode('list'); setDeletingItem(null); }}
+        onCancel={() => { setSubView('list'); setDeletingItem(null); }}
         digits={digits}
       />
     );
@@ -193,12 +202,18 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
   // --- List mode ---
   return (
     <div
-      className="season-view-enter fixed inset-0 z-40 overflow-y-auto no-scrollbar"
-      style={{ background: 'rgb(var(--bg))', willChange: 'transform' }}
+      className={`season-view-enter fixed inset-0 z-40 overflow-y-auto no-scrollbar${isExiting ? ' is-exiting' : ''}`}
+      style={{
+        background: 'rgb(var(--bg))',
+        transform: isExiting ? 'translate3d(100%, 0, 0)' : undefined,
+        transition: isExiting ? 'transform 0.3s cubic-bezier(0.4, 0, 1, 1)' : undefined,
+        willChange: 'transform',
+      }}
     >
       <style>{`
         @keyframes season-view-enter { from { transform: translate3d(100%, 0, 0); } to { transform: translate3d(0, 0, 0); } }
         .season-view-enter { animation: season-view-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+        .season-view-enter.is-exiting { animation: none; }
       `}</style>
 
       {/* Header */}
@@ -228,7 +243,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
         {/* Add button */}
         <button
           type="button"
-          onClick={() => setMode('add')}
+          onClick={() => setSubView('add')}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium pressable mb-4"
           style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
         >
@@ -244,7 +259,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
                 <SortableItem
                   key={item.id}
                   item={item}
-                  onEdit={() => { setEditingId(item.id); setMode('edit'); }}
+                  onEdit={() => { setEditingId(item.id); setSubView('edit'); }}
                   onDelete={() => handleDeleteClick(item)}
                   digits={digits}
                 />
@@ -267,7 +282,16 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
 
 function CatalogScreenWrapper({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) {
   return (
-    <div className="season-view-enter fixed inset-0 z-40 overflow-y-auto no-scrollbar" style={{ background: 'rgb(var(--bg))' }}>
+    <div className="catalog-sub-enter fixed inset-0 z-40 overflow-y-auto no-scrollbar" style={{ background: 'rgb(var(--bg))', willChange: 'transform' }}>
+      <style>{`
+        @keyframes catalog-sub-enter {
+          from { transform: translate3d(100%, 0, 0); opacity: 0.5; }
+          to { transform: translate3d(0, 0, 0); opacity: 1; }
+        }
+        .catalog-sub-enter {
+          animation: catalog-sub-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+      `}</style>
       <div className="sticky top-0 z-30 w-full" style={{ background: 'rgb(var(--bg))' }}>
         <header className="px-4 py-3 max-w-2xl mx-auto w-full" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
           <div className="flex items-center gap-3">
