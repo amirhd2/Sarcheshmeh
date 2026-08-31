@@ -26,8 +26,9 @@ import {
 import { db } from '@/db/schema';
 import {
   Sun, Moon, Monitor, Download, Upload, FileText, Trash2,
-  AlertTriangle, Info, ChevronDown, Database, AlertCircle,
+  AlertTriangle, Info, ChevronDown, ChevronRight, Database, AlertCircle,
 } from 'lucide-react';
+import { CatalogManagementView } from './CatalogManagementView';
 
 interface SettingsSheetProps {
   open: boolean;
@@ -48,6 +49,7 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
   const [demoCount, setDemoCount] = useState<number | null>(null);
   const [showWipeModal, setShowWipeModal] = useState(false);
   const [wipeConfirmText, setWipeConfirmText] = useState('');
+  const [showCatalogManagement, setShowCatalogManagement] = useState(false);
 
   async function refreshDemoCount() {
     // Use filter (not where.equals) — boolean indexing is unreliable
@@ -151,16 +153,24 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
             </div>
           </AccordionItem>
 
-          {/* Categories — Phase 2 placeholder */}
+          {/* Categories & Destinations — opens full management view */}
           <AccordionItem
             icon={<Database size={18} />}
             title="دسته‌ها و مقصدها"
             isOpen={openSection === 'categories'}
             onToggle={() => toggleSection('categories')}
           >
-            <p className="text-sm text-text-muted py-2">
-              مدیریت دسته‌ها و مقصدها در فاز ۲ اضافه می‌شه.
-            </p>
+            <div className="py-2">
+              <button
+                type="button"
+                onClick={() => { setShowCatalogManagement(true); }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-2xl pressable"
+                style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
+              >
+                <span className="text-sm font-medium">مدیریت دسته‌ها و مقصدها</span>
+                <ChevronRight size={18} strokeWidth={2.5} />
+              </button>
+            </div>
           </AccordionItem>
 
           {/* Backup */}
@@ -336,6 +346,11 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
           </>
         )}
       </AnimatePresence>
+
+      {/* Catalog Management — full-screen view */}
+      {showCatalogManagement && (
+        <CatalogManagementView onBack={() => setShowCatalogManagement(false)} />
+      )}
     </>
   );
 }
