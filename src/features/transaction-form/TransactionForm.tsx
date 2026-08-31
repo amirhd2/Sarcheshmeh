@@ -32,16 +32,18 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
-import { Check, ChevronRight, Calendar, Eraser, Plus } from 'lucide-react';
+import { Check, ChevronRight, Calendar, Eraser, Plus, Repeat } from 'lucide-react';
 import { NumberPad } from '@/components/NumberPad';
 import { JalaliDatePicker } from '@/components/JalaliDatePicker';
 import { IconRenderer } from '@/components/IconRenderer';
 import { BottomSheet } from '@/components/BottomSheet';
 import { CatalogForm, type CatalogFormData } from '@/components/settings/CatalogForm';
+import { RepeatDialog } from '@/components/RepeatDialog';
 import { useCategories, useDestinations } from './useCatalogs';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useHorizontalDragScroll } from '@lib/useHorizontalDragScroll';
 import { addCategory, addDestination } from '@/features/settings/catalogOps';
+import { generateRecurringTransactions, saveRecurringTransactions } from './recurring';
 import { db } from '@/db/schema';
 import type { Transaction } from '@/db/schema';
 import {
@@ -89,6 +91,7 @@ export function TransactionForm({
   const categoryScroll = useHorizontalDragScroll<HTMLDivElement>();
   const destinationScroll = useHorizontalDragScroll<HTMLDivElement>();
   const [quickAdd, setQuickAdd] = useState<'category' | 'destination' | null>(null);
+  const [showRepeat, setShowRepeat] = useState(false);
 
   // --- Stage state ---
   const [stage, setStage] = useState<Stage>('amount');
@@ -495,23 +498,43 @@ export function TransactionForm({
         />
       </div>
 
-      {/* Submit button */}
-      <motion.button
-        type="button"
-        onClick={handleSubmit}
-        disabled={!canSubmit}
-        whileTap={{ scale: canSubmit ? 0.97 : 1 }}
-        className="w-full py-4 rounded-2xl font-medium text-base flex items-center justify-center gap-2 transition-colors mt-2"
-        style={{
-          background: canSubmit
-            ? 'rgb(var(--brand-primary))'
-            : 'rgb(var(--surface-2))',
-          color: canSubmit ? 'white' : 'rgb(var(--text-faint))',
+      {/* Action buttons — submit + repeat */}
+      <div className="flex gap-2 mt-2">
+        {/* Repeat button — only visible when can submit */}
+        {canSubmit && (
+          <motion.button
+            type="button"
+            onClick={() => setShowRepeat(true)}
+            whileTap={{ scale: 0.95 }}
+            className="px-4 rounded-2xl font-medium flex items-center justify-center pressable"
+            style={{
+              background: 'rgb(var(--brand-primary) / 0.10)',
+              color: 'rgb(var(--brand-primary))',
+            }}
+            aria-label="تکرار تراکنش"
+          >
+            <Repeat size={20} strokeWidth={2.5} />
+          </motion.button>
+        )}
+
+        {/* Submit button */}
+        <motion.button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+          whileTap={{ scale: canSubmit ? 0.97 : 1 }}
+          className="flex-1 py-4 rounded-2xl font-medium text-base flex items-center justify-center gap-2 transition-colors"
+          style={{
+            background: canSubmit
+              ? 'rgb(var(--brand-primary))'
+              : 'rgb(var(--surface-2))',
+            color: canSubmit ? 'white' : 'rgb(var(--text-faint))',
         }}
       >
         <Check size={18} strokeWidth={2.5} />
         ثبت تراکنش
       </motion.button>
+      </div>
 
       {/* Quick add bottom sheet — opens directly when + is clicked.
           Slides up from bottom like the transaction form bottom sheet.
@@ -542,6 +565,42 @@ export function TransactionForm({
           />
         )}
       </BottomSheet>
+
+      {/* Repeat dialog — for recurring transactions */}
+      <RepeatDialog
+        open={showRepeat}
+        onClose={() => setShowRepeat(false)}
+        transaction={{
+          amount: amountNumber,
+          categoryId: categoryId ?? '',
+          destinationId: destinationId ?? '',
+          note: note.trim() || undefined,
+        }}
+        dateISO={dateISO}
+        onConfirm={async (frequency, count) => {
+          try {
+            const txs = generateRecurringTransactions(
+              {
+                amount: amountNumber,
+                categoryId: categoryId ?? '',
+                destinationId: destinationId ?? '',
+                note: note.trim() || undefined,
+              },
+              dateISO,
+              frequency,
+              count,
+            );
+            await saveRecurringTransactions(txs);
+            setShowRepeat(false);
+            const { toast } = await import('sonner');
+            toast.success(`${count} تراکنش تکراری ثبت شد`);
+            onSubmit?.(txs[0]!);
+          } catch {
+            const { toast } = await import('sonner');
+            toast.error('خطا در ثبت تراکنش‌های تکراری');
+          }
+        }}
+      />
     </div>
   );
 }

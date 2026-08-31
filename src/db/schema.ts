@@ -31,6 +31,13 @@ export interface Transaction {
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
   deletedAt?: string | null; // soft delete — keep for sync
+  // Recurring transaction support (Phase 2)
+  recurring?: {
+    frequency: 'monthly' | 'yearly'; // repeat interval
+    count: number; // total number of occurrences (including original)
+    parentId: string; // ID of the original transaction (all instances share this)
+    instanceNumber: number; // 1-based: 1 = first occurrence, 2 = second, etc.
+  } | null;
 }
 
 export interface Category {
