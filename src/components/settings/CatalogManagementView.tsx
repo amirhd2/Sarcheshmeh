@@ -116,6 +116,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
         await addDestination(data);
       }
       toast.success(`${tab === 'categories' ? 'دسته' : 'مقصد'} جدید اضافه شد`);
+      setReturningFromSub(true);
       setSubView('list');
     } catch {
       toast.error('خطا در افزودن');
@@ -132,6 +133,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
         await updateDestination(editingId, data);
       }
       toast.success('تغییرات ذخیره شد');
+      setReturningFromSub(true);
       setSubView('list');
       setEditingId(null);
     } catch {
@@ -159,6 +161,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
         await deleteDestination(deletingItem.id, transferToId);
       }
       toast.success('حذف شد');
+      setReturningFromSub(true);
       setSubView('list');
       setDeletingItem(null);
     } catch {
@@ -170,7 +173,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
   if (subView === 'add') {
     return (
       <CatalogScreenWrapper title={tab === 'categories' ? 'دسته جدید' : 'مقصد جدید'} onBack={handleBack} direction="forward">
-        <CatalogForm type={tab === 'categories' ? 'category' : 'destination'} onSubmit={handleAdd} onCancel={() => setSubView('list')} />
+        <CatalogForm type={tab === 'categories' ? 'category' : 'destination'} onSubmit={handleAdd} onCancel={() => { setReturningFromSub(true); setSubView('list'); }} />
       </CatalogScreenWrapper>
     );
   }
@@ -184,7 +187,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
             type={tab === 'categories' ? 'category' : 'destination'}
             initialData={{ name: item.name, icon: item.icon, color: item.color }}
             onSubmit={handleEdit}
-            onCancel={() => { setSubView('list'); setEditingId(null); }}
+            onCancel={() => { setReturningFromSub(true); setSubView('list'); setEditingId(null); }}
           />
         </CatalogScreenWrapper>
       );
@@ -199,7 +202,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
           count={deleteCount}
           alternatives={currentItems.filter((i) => i.id !== deletingItem.id)}
           onConfirm={handleDeleteConfirm}
-          onCancel={() => { setSubView('list'); setDeletingItem(null); }}
+          onCancel={() => { setReturningFromSub(true); setSubView('list'); setDeletingItem(null); }}
           digits={digits}
         />
       </CatalogScreenWrapper>
