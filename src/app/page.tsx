@@ -19,6 +19,7 @@ import { Fab } from '@/components/dashboard/Fab';
 import { BottomSheet } from '@/components/BottomSheet';
 import { TransactionForm } from '@/features/transaction-form/TransactionForm';
 import { SeasonView } from '@/components/season/SeasonView';
+import { SettingsSheet } from '@/components/settings/SettingsSheet';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
 import { formatToman } from '@lib/format';
@@ -44,6 +45,9 @@ export default function HomePage() {
   // Season view state — null = dashboard, otherwise show that season
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
 
+  // Settings sheet state
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   // Show loading screen until DB is ready
   if (!ready || yearsLoading) {
     return <LoadingScreen />;
@@ -59,6 +63,7 @@ export default function HomePage() {
           selectedYear={effectiveYear}
           onSelectYear={setSelectedYear}
           digits={digits}
+          onSettingsClick={() => setSettingsOpen(true)}
         />
 
         {/* Content container */}
@@ -88,7 +93,7 @@ export default function HomePage() {
 
           {/* Hint */}
           <p className="text-center text-xs text-text-faint pt-2">
-            مرحله ۸ — ژست برگشت از لبه آماده‌ست.
+            فاز ۱ کامل شد — نصب کن و استفاده کن 🎉
           </p>
         </div>
 
@@ -123,6 +128,9 @@ export default function HomePage() {
           onBack={() => setActiveSeason(null)}
         />
       )}
+
+      {/* Settings sheet — opened from the header settings icon */}
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );
 }
@@ -134,11 +142,13 @@ function DashboardHeader({
   selectedYear,
   onSelectYear,
   digits,
+  onSettingsClick,
 }: {
   years: ReadonlyArray<number>;
   selectedYear: number;
   onSelectYear: (y: number) => void;
   digits: 'fa' | 'en';
+  onSettingsClick?: () => void;
 }) {
   return (
     <header
@@ -171,6 +181,7 @@ function DashboardHeader({
         <button
           type="button"
           aria-label="تنظیمات"
+          onClick={onSettingsClick}
           className="w-9 h-9 rounded-full flex items-center justify-center pressable"
           style={{
             background: 'rgb(var(--surface-2))',
