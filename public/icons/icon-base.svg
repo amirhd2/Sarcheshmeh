@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background: marigold green #3E7C6B -->
+  <rect width="512" height="512" rx="112" fill="#3E7C6B"/>
+  
+  <!-- Drop/water source shape — centered, white -->
+  <path
+    d="M256 96
+       C 256 96, 144 224, 144 320
+       C 144 395, 195 448, 256 448
+       C 317 448, 368 395, 368 320
+       C 368 224, 256 96, 256 96 Z"
+    fill="#FFFFFF"
+    opacity="0.95"
+  />
+  
+  <!-- Inner highlight on the drop — gives depth -->
+  <path
+    d="M200 280
+       C 200 240, 230 200, 256 180
+       C 248 220, 250 260, 270 290
+       C 250 280, 220 275, 200 280 Z"
+    fill="#3E7C6B"
+    opacity="0.15"
+  />
+  
+  <!-- Small "source" ripple at the bottom of the drop -->
+  <ellipse
+    cx="256"
+    cy="390"
+    rx="60"
+    ry="8"
+    fill="#3E7C6B"
+    opacity="0.12"
+  />
+</svg>

@@ -17,9 +17,15 @@ export const metadata: Metadata = {
   description: 'دفترچه‌ی درآمد شخصی — آفلاین‌اول، شمسی',
   applicationName: 'سرچشمه',
   authors: [{ name: 'سرچشمه' }],
-  keywords: ['درآمد', 'شمسی', 'جلالی', 'بودجه', 'فinance'],
+  keywords: ['درآمد', 'شمسی', 'جلالی', 'بودجه', 'finance'],
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon-180.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
@@ -47,6 +53,36 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+/* iOS splash screen links — must be in <head> as <link rel="apple-touch-startup-image">.
+   We generate one per device size + color scheme. iOS picks the right one
+   based on device + color scheme automatically. */
+const splashScreens = [
+  // iPhone 14 Pro Max
+  { media: '(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)', url: '/icons/splash-iphone-14-pro-max-light.png' },
+  { media: '(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)', url: '/icons/splash-iphone-14-pro-max-dark.png' },
+  // iPhone 14 Pro
+  { media: '(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)', url: '/icons/splash-iphone-14-pro-light.png' },
+  { media: '(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)', url: '/icons/splash-iphone-14-pro-dark.png' },
+  // iPhone 14
+  { media: '(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)', url: '/icons/splash-iphone-14-light.png' },
+  { media: '(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)', url: '/icons/splash-iphone-14-dark.png' },
+  // iPhone 13 mini
+  { media: '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: light)', url: '/icons/splash-iphone-13-mini-light.png' },
+  { media: '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (prefers-color-scheme: dark)', url: '/icons/splash-iphone-13-mini-dark.png' },
+  // iPhone SE
+  { media: '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)', url: '/icons/splash-iphone-se-light.png' },
+  { media: '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)', url: '/icons/splash-iphone-se-dark.png' },
+  // iPad 12.9
+  { media: '(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)', url: '/icons/splash-ipad-12-9-light.png' },
+  { media: '(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)', url: '/icons/splash-ipad-12-9-dark.png' },
+  // iPad 11
+  { media: '(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)', url: '/icons/splash-ipad-11-light.png' },
+  { media: '(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)', url: '/icons/splash-ipad-11-dark.png' },
+  // iPad 10.2
+  { media: '(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: light)', url: '/icons/splash-ipad-10-2-light.png' },
+  { media: '(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (prefers-color-scheme: dark)', url: '/icons/splash-ipad-10-2-dark.png' },
+];
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -54,13 +90,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" data-sarcheshmeh suppressHydrationWarning>
+      <head>
+        {/* iOS splash screens — one <link> per device + color scheme */}
+        {splashScreens.map((splash) => (
+          <link
+            key={splash.url}
+            rel="apple-touch-startup-image"
+            href={splash.url}
+            media={splash.media}
+          />
+        ))}
+      </head>
       <body className={`${vazirmatn.variable} antialiased`}>
         <AppSettingsProvider>
           {children}
           <Toaster />
-          {/* Sonner toaster at bottom-center, ~5mm (19px) from bottom edge.
-              PRD user feedback: toast should be near the bottom with a
-              logical margin, not in the middle or top (status bar area). */}
           <SonnerToaster
             position="bottom-center"
             toastOptions={{
