@@ -72,7 +72,11 @@ export async function initDatabase(): Promise<Settings> {
 
 /** Wipe ONLY sample data — preserves user-entered records. */
 export async function deleteSampleData(): Promise<{ transactionsRemoved: number }> {
-  const tx = await db.transactions.where('isDemo').equals(1).toArray();
+  // Use .filter() instead of .where('isDemo').equals(1) because
+  // IndexedDB doesn't natively support boolean indexes. Dexie converts
+  // booleans to 0/1 for indexing, but the query behavior can be
+  // inconsistent across Dexie versions. Filter is always reliable.
+  const tx = await db.transactions.filter((t) => t.isDemo === true).toArray();
   const ids = tx.map((t) => t.id);
   if (ids.length > 0) {
     await db.transactions.bulkDelete(ids);

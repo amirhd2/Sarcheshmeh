@@ -33,6 +33,11 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'سرچشمه',
   },
+  // Explicit apple-mobile-web-app-capable meta tag — ensures iOS
+  // treats this as a full-screen PWA with splash screen support.
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+  },
   openGraph: {
     title: 'سرچشمه',
     description: 'دفترچه‌ی درآمد شخصی — آفلاین‌اول، شمسی',
