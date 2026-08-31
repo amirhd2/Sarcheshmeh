@@ -47,6 +47,8 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
   const [tab, setTab] = useState<TabType>('categories');
   const [isExiting, setIsExiting] = useState(false);
   const [subView, setSubView] = useState<'list' | 'add' | 'edit' | 'delete'>('list');
+  // Track whether the list view should animate from left (returning from sub-view)
+  const [returningFromSub, setReturningFromSub] = useState(false);
   const exitTimeoutRef = useRef<number | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingItem, setDeletingItem] = useState<Category | Destination | null>(null);
@@ -61,6 +63,8 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
   // Handle back with exit animation
   const handleBack = () => {
     if (subView !== 'list') {
+      // Returning from sub-view → list should animate from LEFT
+      setReturningFromSub(true);
       setSubView('list');
       setEditingId(null);
       setDeletingItem(null);
@@ -142,6 +146,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
       : await getDestinationTransactionCount(item.id);
     setDeleteCount(count);
     setDeletingItem(item);
+    setReturningFromSub(false);
     setSubView('delete');
   }
 
@@ -202,9 +207,16 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
   }
 
   // --- List mode ---
+  // When returning from a sub-view (add/edit/delete), the list should
+  // animate from the LEFT (catalog-sub-back). When first mounting or
+  // after tab switch, it animates from the RIGHT (season-view-enter).
+  const listAnimClass = returningFromSub
+    ? 'catalog-sub-back'
+    : `season-view-enter${isExiting ? ' is-exiting' : ''}`;
+
   return (
     <div
-      className={`season-view-enter fixed inset-0 z-40 overflow-y-auto no-scrollbar${isExiting ? ' is-exiting' : ''}`}
+      className={`${listAnimClass} fixed inset-0 z-40 overflow-y-auto no-scrollbar`}
       style={{
         background: 'rgb(var(--bg))',
         transform: isExiting ? 'translate3d(100%, 0, 0)' : undefined,
@@ -216,6 +228,11 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
         @keyframes season-view-enter { from { transform: translate3d(100%, 0, 0); } to { transform: translate3d(0, 0, 0); } }
         .season-view-enter { animation: season-view-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
         .season-view-enter.is-exiting { animation: none; }
+        @keyframes catalog-sub-back {
+          from { transform: translate3d(-30%, 0, 0); opacity: 0.7; }
+          to { transform: translate3d(0, 0, 0); opacity: 1; }
+        }
+        .catalog-sub-back { animation: catalog-sub-back 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
       `}</style>
 
       {/* Header */}
@@ -245,7 +262,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
         {/* Add button */}
         <button
           type="button"
-          onClick={() => setSubView('add')}
+          onClick={() => { setReturningFromSub(false); setSubView('add'); }}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium pressable mb-4"
           style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
         >
@@ -261,7 +278,7 @@ export function CatalogManagementView({ onBack }: CatalogManagementViewProps) {
                 <SortableItem
                   key={item.id}
                   item={item}
-                  onEdit={() => { setEditingId(item.id); setSubView('edit'); }}
+                  onEdit={() => { setEditingId(item.id); setReturningFromSub(false); setSubView('edit'); }}
                   onDelete={() => handleDeleteClick(item)}
                   digits={digits}
                 />

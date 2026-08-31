@@ -36,10 +36,12 @@ import { Check, ChevronRight, Calendar, Eraser, Plus } from 'lucide-react';
 import { NumberPad } from '@/components/NumberPad';
 import { JalaliDatePicker } from '@/components/JalaliDatePicker';
 import { IconRenderer } from '@/components/IconRenderer';
+import { BottomSheet } from '@/components/BottomSheet';
+import { CatalogForm, type CatalogFormData } from '@/components/settings/CatalogForm';
 import { useCategories, useDestinations } from './useCatalogs';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useHorizontalDragScroll } from '@lib/useHorizontalDragScroll';
-import { CatalogManagementView } from '@/components/settings/CatalogManagementView';
+import { addCategory, addDestination } from '@/features/settings/catalogOps';
 import { db } from '@/db/schema';
 import type { Transaction } from '@/db/schema';
 import {
@@ -84,9 +86,9 @@ export function TransactionForm({
   const { digits } = useAppSettings();
   const categories = useCategories() ?? [];
   const destinations = useDestinations() ?? [];
-  const categoryScrollRef = useHorizontalDragScroll<HTMLDivElement>();
-  const destinationScrollRef = useHorizontalDragScroll<HTMLDivElement>();
-  const [showCatalogManagement, setShowCatalogManagement] = useState(false);
+  const categoryScroll = useHorizontalDragScroll<HTMLDivElement>();
+  const destinationScroll = useHorizontalDragScroll<HTMLDivElement>();
+  const [quickAdd, setQuickAdd] = useState<'category' | 'destination' | null>(null);
 
   // --- Stage state ---
   const [stage, setStage] = useState<Stage>('amount');
@@ -393,7 +395,7 @@ export function TransactionForm({
       {/* Category chips — drag to scroll + add button at end */}
       <div>
         <label className="block text-sm font-medium text-text mb-2">دسته</label>
-        <div ref={categoryScrollRef} className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1" style={{ cursor: 'grab' }}>
+        <div {...categoryScroll} className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
           {categories.map((cat) => {
             const active = cat.id === categoryId;
             return (
@@ -420,7 +422,7 @@ export function TransactionForm({
           {/* Add new category button — at the end of the list */}
           <button
             type="button"
-            onClick={() => setShowCatalogManagement(true)}
+            onClick={() => setQuickAdd('category')}
             className="flex items-center justify-center w-10 h-10 rounded-2xl pressable shrink-0"
             style={{
               background: 'rgb(var(--brand-primary) / 0.10)',
@@ -436,7 +438,7 @@ export function TransactionForm({
       {/* Destination chips — drag to scroll + add button at end */}
       <div>
         <label className="block text-sm font-medium text-text mb-2">مقصد</label>
-        <div ref={destinationScrollRef} className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1" style={{ cursor: 'grab' }}>
+        <div {...destinationScroll} className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
           {destinations.map((dst) => {
             const active = dst.id === destinationId;
             return (
@@ -463,7 +465,7 @@ export function TransactionForm({
           {/* Add new destination button */}
           <button
             type="button"
-            onClick={() => setShowCatalogManagement(true)}
+            onClick={() => setQuickAdd('destination')}
             className="flex items-center justify-center w-10 h-10 rounded-2xl pressable shrink-0"
             style={{
               background: 'rgb(var(--brand-primary) / 0.10)',
@@ -511,10 +513,35 @@ export function TransactionForm({
         ثبت تراکنش
       </motion.button>
 
-      {/* Catalog Management — opened from the + button in chips */}
-      {showCatalogManagement && (
-        <CatalogManagementView onBack={() => setShowCatalogManagement(false)} />
-      )}
+      {/* Quick add bottom sheet — opens directly when + is clicked.
+          Slides up from bottom like the transaction form bottom sheet.
+          Has rounded top corners (handled by BottomSheet component). */}
+      <BottomSheet
+        open={quickAdd !== null}
+        onClose={() => setQuickAdd(null)}
+        title={quickAdd === 'category' ? 'دسته جدید' : 'مقصد جدید'}
+      >
+        {quickAdd && (
+          <CatalogForm
+            type={quickAdd}
+            onSubmit={async (data: CatalogFormData) => {
+              try {
+                if (quickAdd === 'category') {
+                  const newId = await addCategory(data);
+                  setCategoryId(newId);
+                } else {
+                  const newId = await addDestination(data);
+                  setDestinationId(newId);
+                }
+                setQuickAdd(null);
+              } catch {
+                /* error handled by toast in form */
+              }
+            }}
+            onCancel={() => setQuickAdd(null)}
+          />
+        )}
+      </BottomSheet>
     </div>
   );
 }
