@@ -109,12 +109,14 @@ export function ReportsView({ year: initialYear, onBack }: ReportsViewProps) {
     const cmp = Array(12).fill(0);
     for (const tx of data.txs) cur[jalaliMonth(tx.date) - 1] += tx.amount;
     for (const tx of compareData) cmp[jalaliMonth(tx.date) - 1] += tx.amount;
+    // Use fixed keys "current" and "compare" instead of dynamic year keys.
+    // recharts doesn't handle dynamic dataKey well when the key is a number.
     return JALALI_MONTHS_FA.map((name, i) => ({
       month: name.slice(0, 3),
-      [year]: cur[i],
-      [compareYear]: cmp[i],
+      current: cur[i],
+      compare: cmp[i],
     }));
-  }, [data, compareData, year, compareYear]);
+  }, [data, compareData]);
 
   const yearTotal = monthlyData.reduce((s, d) => s + d.amount, 0);
   const compareTotal = compareData?.reduce((s, t) => s + t.amount, 0) ?? 0;
@@ -296,9 +298,14 @@ export function ReportsView({ year: initialYear, onBack }: ReportsViewProps) {
                 <BarChart data={comparisonData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                   <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'rgb(var(--text-muted))' }} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(v) => formatCompact(v, digits)} tick={{ fontSize: 10, fill: 'rgb(var(--text-muted))' }} axisLine={false} tickLine={false} width={48} />
-                  <Tooltip formatter={(v: number, name: number) => [formatToman(v, digits), String(name)]} contentStyle={tooltipStyle} />
-                  <Bar dataKey={compareYear} fill="rgb(var(--text) / 0.2)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey={year} fill="rgb(var(--brand-primary))" radius={[4, 4, 0, 0]} />
+                  <Tooltip formatter={(v: number, name: string) => {
+                    const label = name === 'current' 
+                      ? (digits === 'fa' ? faNum(year) : String(year))
+                      : (digits === 'fa' ? faNum(compareYear) : String(compareYear));
+                    return [formatToman(v, digits), label];
+                  }} contentStyle={tooltipStyle} />
+                  <Bar dataKey="compare" fill="rgb(var(--text) / 0.2)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="current" fill="rgb(var(--brand-primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               <div className="flex items-center justify-center gap-4 mt-2">

@@ -157,7 +157,7 @@ export function SeasonView({ year, season, onBack }: SeasonViewProps) {
                   {JALALI_MONTHS_FA[SEASON_MONTHS[season][0] - 1]}–{JALALI_MONTHS_FA[SEASON_MONTHS[season][2] - 1]} ·{' '}
                   <span className="nums digits-font">{digits === 'fa' ? faNum(year) : year}</span>
                 </p>
-                {yearLocked && <LockBadge year={year} digits={digits} />}
+                {yearLocked && <LockBadge year={year} digits={digits} variant="full" />}
               </div>
             </div>
           </div>

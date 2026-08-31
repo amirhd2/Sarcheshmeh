@@ -28,7 +28,6 @@ import { formatToman } from '@lib/format';
 import { todayJalaliParts, faNum, type Season } from '@lib/jalali';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { LockBadge } from '@/components/LockBadge';
-import { Lock } from 'lucide-react';
 
 const SEASONS: ReadonlyArray<Season> = ['spring', 'summer', 'autumn', 'winter'];
 
@@ -199,15 +198,6 @@ function DashboardHeader({
           <DropIconSmall />
         </div>
         <h1 className="text-lg font-bold text-text">سرچشمه</h1>
-        {isYearLocked && (
-          <div
-            className="w-6 h-6 rounded-full flex items-center justify-center"
-            style={{ background: 'rgb(var(--danger) / 0.12)' }}
-            title="سال قفل است"
-          >
-            <Lock size={12} strokeWidth={2.5} style={{ color: 'rgb(var(--danger))' }} />
-          </div>
-        )}
       </div>
 
       <div className="flex items-center gap-2">

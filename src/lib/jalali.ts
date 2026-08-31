@@ -234,7 +234,11 @@ export function jalaliSeasonRange(jy: number, season: Season): { start: string; 
 export function jalaliYearRange(jy: number): { start: string; end: string } {
   const padded = `${jy}-01-01`;
   const start = dayjs(padded, { jalali: true }).format('YYYY-MM-DD');
-  const end = dayjs(padded, { jalali: true }).endOf('year').format('YYYY-MM-DD');
+  // Use endOf('jYear') — the jalali-plugin-dayjs uses 'jYear' for
+  // jalali year. But to be safe, we compute the end of Esfand (month 12)
+  // directly, which is always the last day of the jalali year.
+  const esfandPadded = `${jy}-12-01`;
+  const end = dayjs(esfandPadded, { jalali: true }).endOf('month').format('YYYY-MM-DD');
   return { start, end };
 }
 

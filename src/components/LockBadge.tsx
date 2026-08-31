@@ -4,8 +4,9 @@
    سرچشمه — LockBadge
    =========================================================================
    Shows a compact lock indicator when a year is locked.
-   On mobile: just a lock icon (no text — prevents horizontal overflow).
-   On desktop (sm+): icon + "سال قفل است" text.
+   - In the dashboard header (tight space): icon only on mobile,
+     icon + short text on desktop.
+   - In the season header (more space): icon + full text always.
    ========================================================================= */
 
 import { Lock } from 'lucide-react';
@@ -14,9 +15,11 @@ import { faNum } from '@lib/jalali';
 interface LockBadgeProps {
   year: number;
   digits: 'fa' | 'en';
+  /** "compact" = icon only on mobile (dashboard), "full" = always show text (season) */
+  variant?: 'compact' | 'full';
 }
 
-export function LockBadge({ year, digits }: LockBadgeProps) {
+export function LockBadge({ year, digits, variant = 'compact' }: LockBadgeProps) {
   const yearStr = digits === 'fa' ? faNum(year) : String(year);
 
   return (
@@ -28,7 +31,9 @@ export function LockBadge({ year, digits }: LockBadgeProps) {
       }}
     >
       <Lock size={11} strokeWidth={2.5} />
-      <span className="text-[10px] font-medium hidden sm:inline">سال {yearStr} قفل</span>
+      <span className={`text-[10px] font-medium ${variant === 'compact' ? 'hidden sm:inline' : ''}`}>
+        سال {yearStr} قفل
+      </span>
     </div>
   );
 }
