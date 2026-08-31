@@ -220,8 +220,11 @@
     color: rgb(var(--text));
     font-family: var(--font-vazirmatn), system-ui, sans-serif;
     min-height: 100dvh;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    /* NOTE: safe-area-inset-top padding is intentionally NOT on body.
+       Each page's header handles its own safe-area padding so the
+       header's background color extends up under the status bar.
+       If body had this padding, the area above the header would show
+       body's --bg color instead of the header's color. */
     touch-action: manipulation;
     font-feature-settings: 'ss01' on, 'tnum' on;
     -webkit-font-smoothing: antialiased;

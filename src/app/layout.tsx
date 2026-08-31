@@ -58,7 +58,17 @@ export default function RootLayout({
         <AppSettingsProvider>
           {children}
           <Toaster />
-          <SonnerToaster position="top-center" />
+          {/* Sonner toaster at bottom-center, ~5mm (19px) from bottom edge.
+              PRD user feedback: toast should be near the bottom with a
+              logical margin, not in the middle or top (status bar area). */}
+          <SonnerToaster
+            position="bottom-center"
+            toastOptions={{
+              style: {
+                marginBottom: 'calc(19px + env(safe-area-inset-bottom, 0px))',
+              },
+            }}
+          />
         </AppSettingsProvider>
       </body>
     </html>
