@@ -60,11 +60,15 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
   const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [showCatalogManagement, setShowCatalogManagement] = useState(false);
   const { lockedYears, toggleLock, isLocked } = useLockedYears();
-  const { user, signOut } = useAuth();
+  const { user, signOut, configured } = useAuth();
   const [syncing, setSyncing] = useState(false);
 
   async function handleSync() {
     if (!user) return;
+    if (!configured) {
+      toast.error('سینک ابری فعال نیست — env variables ناقص‌اند.');
+      return;
+    }
     setSyncing(true);
     try {
       const result = await syncAll(user.id);

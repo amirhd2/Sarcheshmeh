@@ -6,11 +6,14 @@
    Login / Sign up screen that can be dismissed.
    - User can skip and use the app offline without syncing
    - Can be reopened from Settings → "حساب و سینک"
+
+   If Supabase is not configured (env vars missing), shows a banner
+   explaining what to do instead of silently failing with "Failed to fetch".
    ========================================================================= */
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Cloud, RefreshCw } from 'lucide-react';
+import { X, Cloud, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { syncAll } from '@/features/auth/sync';
 import { toast } from 'sonner';
@@ -23,7 +26,7 @@ interface AuthScreenProps {
 }
 
 export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, configured } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,9 +36,13 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!configured) {
+      setError('سینک ابری هنوز فعال نیست — env variables ناقص‌اند. اپ فعلاً فقط روی همین دستگاه کار می‌کنه.');
+      return;
+    }
     setLoading(true);
     const fn = mode === 'signin' ? signIn : signUp;
-    const { error } = await fn(email.trim(), password);
+    const { error, user: signedInUser } = await fn(email.trim(), password);
     setLoading(false);
     if (error) {
       setError(error);
@@ -44,9 +51,9 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
     } else {
       // Signed in successfully — sync and close
       toast.success('خوش اومدی!');
-      if (user) {
+      if (signedInUser) {
         try {
-          await syncAll(user.id);
+          await syncAll(signedInUser.id);
           toast.success('داده‌ها سینک شد');
         } catch { /* ignore sync errors on first login */ }
       }
@@ -58,6 +65,18 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
   return (
     <BottomSheet open={open} onClose={onClose} title="ورود به حساب" showCloseButton>
       <div className="px-5 py-3 space-y-5">
+        {/* Not-configured warning */}
+        {!configured && (
+          <div className="flex items-start gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgb(var(--warning) / 0.12)' }}>
+            <AlertTriangle size={20} style={{ color: 'rgb(var(--warning))', flexShrink: 0, marginTop: 2 }} />
+            <p className="text-xs leading-relaxed flex-1" style={{ color: 'rgb(var(--text))' }}>
+              سینک ابری هنوز فعال نیست. در فایل <code dir="ltr" className="px-1.5 py-0.5 rounded" style={{ background: 'rgb(var(--surface-2))' }}>.env</code> پروژه، مقادیر <code dir="ltr" className="px-1.5 py-0.5 rounded" style={{ background: 'rgb(var(--surface-2))' }}>NEXT_PUBLIC_SUPABASE_URL</code> و <code dir="ltr" className="px-1.5 py-0.5 rounded" style={{ background: 'rgb(var(--surface-2))' }}>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> رو از dashboard.supabase.com بردار، ذخیره کن و یک بار اپ رو ری‌بیلد کن.
+              <br /><br />
+              بدون سینک هم اپ روی همین دستگاه کار می‌کنه.
+            </p>
+          </div>
+        )}
+
         {/* Info */}
         <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgb(var(--brand-primary) / 0.08)' }}>
           <Cloud size={20} style={{ color: 'rgb(var(--brand-primary))' }} />
