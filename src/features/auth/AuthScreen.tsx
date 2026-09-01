@@ -11,7 +11,7 @@
    what to do instead of silently failing.
    ========================================================================= */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Cloud, AlertTriangle } from 'lucide-react';
 import { useGoogleAuth } from '@/features/auth/GoogleAuthContext';
 import { syncWithDrive } from '@/features/auth/driveSync';
@@ -28,6 +28,23 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
   const { signIn, configured } = useGoogleAuth();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentOrigin, setCurrentOrigin] = useState<string>('');
+  const [topOrigin, setTopOrigin] = useState<string>('');
+
+  useEffect(() => {
+    if (open) {
+      setCurrentOrigin(window.location.origin);
+      try {
+        if (window.top && window.top !== window) {
+          setTopOrigin(window.top.location.origin);
+        } else {
+          setTopOrigin('(همان صفحه اپ)');
+        }
+      } catch {
+        setTopOrigin('(cross-origin — قابل دسترسی نیست)');
+      }
+    }
+  }, [open]);
 
   async function handleGoogleSignIn() {
     setError(null);
@@ -116,6 +133,23 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
           فقط یک پوشه‌ی پنهان مخصوص «سرچشمه» در گوگل‌درایو شما ساخته می‌شه.
           هیچ‌کس غیر از خود شما دسترسی به اون نداره.
         </p>
+
+        {/* Debug box — always shows current origins so user can match them
+            in Google Cloud Console → Authorized JavaScript origins */}
+        <div className="px-4 py-3 rounded-2xl text-xs space-y-1.5" style={{ background: 'rgb(var(--brand-primary) / 0.08)', color: 'rgb(var(--text-muted))' }}>
+          <p className="font-medium" style={{ color: 'rgb(var(--text))' }}>برای تنظیمات گوگل:</p>
+          <p className="leading-relaxed">
+            این آدرس‌ها رو در Google Cloud Console → Credentials → OAuth Client → Authorized JavaScript origins اضافه کن:
+          </p>
+          <p dir="ltr" className="font-mono text-[11px] px-2 py-1.5 rounded" style={{ background: 'rgb(var(--surface-2))', color: 'rgb(var(--text))' }}>
+            {currentOrigin || '(در حال بارگذاری...)'}
+          </p>
+          {topOrigin && topOrigin !== '(همان صفحه اپ)' && topOrigin !== '(cross-origin — قابل دسترسی نیست)' && (
+            <p dir="ltr" className="font-mono text-[11px] px-2 py-1.5 rounded" style={{ background: 'rgb(var(--surface-2))', color: 'rgb(var(--text))' }}>
+              {topOrigin}
+            </p>
+          )}
+        </div>
 
         {/* Skip */}
         <button
