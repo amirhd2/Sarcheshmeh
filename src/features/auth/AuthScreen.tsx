@@ -1,18 +1,29 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — AuthScreen
+   سرچشمه — AuthScreen (non-blocking)
    =========================================================================
-   Login / Sign up screen shown when user is not authenticated.
-   Simple email + password form.
+   Login / Sign up screen that can be dismissed.
+   - User can skip and use the app offline without syncing
+   - Can be reopened from Settings → "حساب و سینک"
    ========================================================================= */
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Cloud, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
+import { syncAll } from '@/features/auth/sync';
+import { toast } from 'sonner';
+import { BottomSheet } from '@/components/BottomSheet';
 
-export function AuthScreen() {
-  const { signIn, signUp } = useAuth();
+interface AuthScreenProps {
+  open: boolean;
+  onClose: () => void;
+  onAuthed?: () => void;
+}
+
+export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
+  const { signIn, signUp, user } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,30 +41,30 @@ export function AuthScreen() {
       setError(error);
     } else if (mode === 'signup') {
       setError('ایمیل تأیید رو چک کن — اگه فعال نباشه، مستقیم وارد می‌شی');
+    } else {
+      // Signed in successfully — sync and close
+      toast.success('خوش اومدی!');
+      if (user) {
+        try {
+          await syncAll(user.id);
+          toast.success('داده‌ها سینک شد');
+        } catch { /* ignore sync errors on first login */ }
+      }
+      onAuthed?.();
+      onClose();
     }
   }
 
   return (
-    <div className="min-h-safe flex items-center justify-center p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-sm"
-      >
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div
-            className="inline-flex items-center justify-center w-16 h-16 rounded-3xl mb-3"
-            style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}
-          >
-            <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
-              <path d="M16 4C16 4 7 13.5 7 20a9 9 0 0 0 18 0c0-6.5-9-16-9-16Z" fill="rgb(var(--brand-primary))" opacity="0.9" />
-              <path d="M12 19a4 4 0 0 0 4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-text">سرچشمه</h1>
-          <p className="text-sm text-text-muted mt-1">برای سینک داده‌ها وارد شو</p>
+    <BottomSheet open={open} onClose={onClose} title="ورود به حساب" showCloseButton>
+      <div className="px-5 py-3 space-y-5">
+        {/* Info */}
+        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgb(var(--brand-primary) / 0.08)' }}>
+          <Cloud size={20} style={{ color: 'rgb(var(--brand-primary))' }} />
+          <p className="text-xs text-text-muted leading-relaxed flex-1">
+            با ورود به حساب، داده‌هات بین دستگاه‌ها سینک می‌شه و بکاپ ابری می‌گیری.
+            بدون ورود هم می‌تونی از اپ استفاده کنی — فقط روی همین دستگاه.
+          </p>
         </div>
 
         {/* Form */}
@@ -88,10 +99,7 @@ export function AuthScreen() {
           </div>
 
           {error && (
-            <div
-              className="px-4 py-3 rounded-2xl text-xs"
-              style={{ background: 'rgb(var(--danger) / 0.10)', color: 'rgb(var(--danger))' }}
-            >
+            <div className="px-4 py-3 rounded-2xl text-xs" style={{ background: 'rgb(var(--danger) / 0.10)', color: 'rgb(var(--danger))' }}>
               {error}
             </div>
           )}
@@ -100,14 +108,10 @@ export function AuthScreen() {
             type="submit"
             disabled={loading || !email.trim() || password.length < 6}
             whileTap={{ scale: 0.97 }}
-            className="w-full py-3.5 rounded-2xl font-medium text-base"
+            className="w-full py-3.5 rounded-2xl font-medium text-base flex items-center justify-center gap-2"
             style={{
-              background: loading || !email.trim() || password.length < 6
-                ? 'rgb(var(--surface-2))'
-                : 'rgb(var(--brand-primary))',
-              color: loading || !email.trim() || password.length < 6
-                ? 'rgb(var(--text-faint))'
-                : 'white',
+              background: loading || !email.trim() || password.length < 6 ? 'rgb(var(--surface-2))' : 'rgb(var(--brand-primary))',
+              color: loading || !email.trim() || password.length < 6 ? 'rgb(var(--text-faint))' : 'white',
             }}
           >
             {loading ? 'صبر کن...' : mode === 'signin' ? 'ورود' : 'ثبت‌نام'}
@@ -115,7 +119,7 @@ export function AuthScreen() {
         </form>
 
         {/* Toggle mode */}
-        <div className="text-center mt-4">
+        <div className="text-center">
           <button
             type="button"
             onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); }}
@@ -124,7 +128,17 @@ export function AuthScreen() {
             {mode === 'signin' ? 'حساب نداری؟ ثبت‌نام کن' : 'حساب داری؟ وارد شو'}
           </button>
         </div>
-      </motion.div>
-    </div>
+
+        {/* Skip */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full py-3 rounded-2xl text-sm font-medium pressable"
+          style={{ background: 'rgb(var(--surface-2))', color: 'rgb(var(--text-muted))' }}
+        >
+          فعلاً نه — بدون حساب ادامه بده
+        </button>
+      </div>
+    </BottomSheet>
   );
 }

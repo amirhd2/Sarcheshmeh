@@ -39,6 +39,7 @@ import { jalaliYear, todayJalaliParts, faNum } from '@lib/jalali';
 interface SettingsSheetProps {
   open: boolean;
   onClose: () => void;
+  onOpenAuth?: () => void;
 }
 
 type AccordionSection =
@@ -51,7 +52,7 @@ type AccordionSection =
   | 'about'
   | null;
 
-export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
+export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps) {
   const { theme, digits, setTheme, setDigits } = useAppSettings();
   const [openSection, setOpenSection] = useState<AccordionSection>('appearance');
   const [demoCount, setDemoCount] = useState<number | null>(null);
@@ -373,9 +374,15 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-text-muted text-center py-2">
-                  برای سینک داده‌ها بین دستگاه‌ها، باید وارد حساب بشی.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => { onClose(); onOpenAuth?.(); }}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium pressable"
+                  style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
+                >
+                  <User size={16} strokeWidth={2.5} />
+                  ورود / ثبت‌نام
+                </button>
               )}
             </div>
           </AccordionItem>
