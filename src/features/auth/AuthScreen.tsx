@@ -52,23 +52,29 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
       setError('همگام‌سازی با گوگل فعال نیست — env variables ناقص‌اند. اپ فعلاً فقط روی همین دستگاه کار می‌کنه.');
       return;
     }
+    console.log('[AuthScreen] starting Google sign-in...');
     setLoading(true);
-    const { error } = await signIn();
-    if (error) {
+    const result = await signIn();
+    console.log('[AuthScreen] signIn result:', result);
+    if (result.error) {
+      console.error('[AuthScreen] sign-in failed:', result.error);
       setLoading(false);
-      setError(error);
+      setError(result.error);
       return;
     }
     // Signed in — trigger first sync
+    console.log('[AuthScreen] sign-in successful, starting sync...');
     toast.success('به گوگل متصل شد');
     try {
       const result = await syncWithDrive();
+      console.log('[AuthScreen] sync result:', result);
       if (result.errors.length === 0) {
         toast.success(`همگام‌سازی شد — ${result.pushed} آیتم آپلود، ${result.pulled} آیتم دانلود`);
       } else {
         toast.error(`همگام‌سازی ناقص: ${result.errors.join('، ')}`);
       }
     } catch (e) {
+      console.error('[AuthScreen] sync error:', e);
       toast.error(e instanceof Error ? e.message : 'خطا در همگام‌سازی');
     }
     setLoading(false);

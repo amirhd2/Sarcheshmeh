@@ -106,27 +106,41 @@ export function loadGisScript(): Promise<void> {
 
 function loadStoredToken(): StoredToken | null {
   if (typeof window === 'undefined') return null;
-  try {
-    const raw = sessionStorage.getItem(TOKEN_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as StoredToken;
-    if (!parsed.access_token || !parsed.expires_at) return null;
-    return parsed;
-  } catch {
-    return null;
+  // Try both localStorage (persistent) and sessionStorage (tab-only).
+  // Some browsers partition storage for cross-origin iframes; using both
+  // increases chances of finding a previously-saved token.
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    try {
+      const raw = storage.getItem(TOKEN_STORAGE_KEY);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as StoredToken;
+      if (!parsed.access_token || !parsed.expires_at) continue;
+      return parsed;
+    } catch {
+      // ignore
+    }
   }
+  return null;
 }
 
 function saveStoredToken(token: StoredToken) {
   if (typeof window === 'undefined') return;
-  try {
-    sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(token));
-  } catch { /* quota — ignore */ }
+  // Save to both storages — localStorage for persistence across sessions,
+  // sessionStorage for tab-scoped access during the current tab.
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    try {
+      storage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(token));
+    } catch { /* quota or partition — ignore */ }
+  }
 }
 
 function clearStoredToken() {
   if (typeof window === 'undefined') return;
-  sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    try {
+      storage.removeItem(TOKEN_STORAGE_KEY);
+    } catch { /* ignore */ }
+  }
 }
 
 /** Returns a still-valid access token from storage, or null. */
@@ -157,26 +171,44 @@ export async function requestAccessToken(opts: { silent?: boolean } = {}): Promi
     throw new Error('Google Identity Services بارگذاری نشد');
   }
 
+  // For iframe / embedded environments, GIS may have trouble reaching the
+  // callback if it tries to communicate via window.opener. We use the
+  // standard callback approach but add detailed console logging so we can
+  // see what's happening if it fails.
   return new Promise<string>((resolve, reject) => {
+    let settled = false;
+    const wrappedResolve = (value: string) => {
+      if (!settled) { settled = true; resolve(value); }
+    };
+    const wrappedReject = (err: Error) => {
+      if (!settled) { settled = true; reject(err); }
+    };
+
     if (!tokenClient) {
       tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: SCOPE,
-        callback: (response: TokenResponse) => {
+        callback: (response: TokenResponse & { error?: string; error_description?: string }) => {
+          console.log('[GIS] callback received:', response);
+          // GIS may call callback with an error object instead of using error_callback
+          if (response.error) {
+            const errMsg = response.error_description || response.error;
+            console.error('[GIS] callback error:', response.error, response.error_description);
+            wrappedReject(new Error(errMsg));
+            return;
+          }
           if (!response.access_token) {
-            reject(new Error('دسترسی به گوگل ناموفق بود'));
+            console.error('[GIS] no access_token in callback');
+            wrappedReject(new Error('دسترسی به گوگل ناموفق بود'));
             return;
           }
           const expiresAt = Date.now() + (response.expires_in ?? 3600) * 1000;
           saveStoredToken({ access_token: response.access_token, expires_at });
-          resolve(response.access_token);
+          console.log('[GIS] token saved, expires at:', new Date(expiresAt).toISOString());
+          wrappedResolve(response.access_token);
         },
         error_callback: (err: { type: string; message: string }) => {
-          // Common cases:
-          // - 'popup_closed': user closed the popup
-          // - 'access_denied': user denied consent
-          // - 'immediate_failed': silent prompt failed (need interactive)
-          // - 'popup_failed_to_open' etc.
+          console.error('[GIS] error_callback:', err);
           const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '(unknown)';
           const topOrigin = (typeof window !== 'undefined' && window.top && window.top !== window)
             ? (() => { try { return window.top.location.origin; } catch { return '(cross-origin, blocked)'; } })()
@@ -190,7 +222,7 @@ export async function requestAccessToken(opts: { silent?: boolean } = {}): Promi
               : err?.message
                 ? `${err.message}${debugInfo}`
                 : `خطای گوگل${debugInfo}`;
-          reject(new Error(msg));
+          wrappedReject(new Error(msg));
         },
       });
     }
@@ -198,6 +230,14 @@ export async function requestAccessToken(opts: { silent?: boolean } = {}): Promi
     // `silent` => no popup, attempt silent refresh. If user is not signed
     // in to Google or previously denied, this will fail with immediate_failed.
     tokenClient.requestAccessToken({ prompt: opts.silent ? '' : undefined });
+
+    // Timeout — if neither callback nor error_callback fires within 60s,
+    // reject so the UI doesn't hang forever (common in iframe-embedded apps).
+    if (!opts.silent) {
+      setTimeout(() => {
+        wrappedReject(new Error('گوگل پس از ۶۰ ثانیه پاسخ نداد. این معمولاً به‌خاطر اجرای اپ داخل iframe هست. لطفاً اپ رو در یه tab جداگانه (نه داخل chat.z.ai) باز کن و دوباره امتحان کن.'));
+      }, 60_000);
+    }
   });
 }
 
