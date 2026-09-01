@@ -114,11 +114,6 @@ export default function HomePage() {
               />
             ))}
           </div>
-
-          {/* Hint */}
-          <p className="text-center text-xs text-text-faint pt-2">
-            فاز ۱ کامل شد — نصب کن و استفاده کن 🎉
-          </p>
         </div>
 
         <Fab

@@ -176,11 +176,14 @@ export async function requestAccessToken(opts: { silent?: boolean } = {}): Promi
           // - 'popup_closed': user closed the popup
           // - 'access_denied': user denied consent
           // - 'immediate_failed': silent prompt failed (need interactive)
+          const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '(unknown)';
           const msg = err?.type === 'popup_closed'
             ? 'پنجره‌ی گوگل بسته شد'
             : err?.type === 'access_denied'
               ? 'اجازه دسترسی داده نشد'
-              : err?.message || 'خطای گوگل';
+              : err?.message
+                ? `${err.message} — آدرس اپ: ${currentOrigin}`
+                : `خطای گوگل — آدرس اپ: ${currentOrigin}`;
           reject(new Error(msg));
         },
       });

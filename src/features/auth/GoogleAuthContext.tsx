@@ -31,7 +31,7 @@ interface GoogleAuthContextValue {
 }
 
 const NOT_CONFIGURED_MSG =
-  'سینک با گوگل فعال نیست. در فایل .env پروژه، متغیر NEXT_PUBLIC_GOOGLE_CLIENT_ID رو از Google Cloud Console بردار، ذخیره کن و یک بار اپ رو ری‌بیلد کن.';
+  'همگام‌سازی با گوگل فعال نیست. در فایل .env پروژه، متغیر NEXT_PUBLIC_GOOGLE_CLIENT_ID رو از Google Cloud Console بردار، ذخیره کن و یک بار اپ رو ری‌بیلد کن.';
 
 const GoogleAuthContext = createContext<GoogleAuthContextValue | null>(null);
 

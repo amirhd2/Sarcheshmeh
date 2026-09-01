@@ -5,7 +5,7 @@
    =========================================================================
    Asks the user for Google Drive.appdata permission. Can be dismissed.
    - User can skip and use the app offline without syncing
-   - Can be reopened from Settings → "حساب و سینک"
+   - Can be reopened from Settings → "حساب و همگام‌سازی"
 
    If NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing, shows a banner explaining
    what to do instead of silently failing.
@@ -32,7 +32,7 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
   async function handleGoogleSignIn() {
     setError(null);
     if (!configured) {
-      setError('سینک با گوگل فعال نیست — env variables ناقص‌اند. اپ فعلاً فقط روی همین دستگاه کار می‌کنه.');
+      setError('همگام‌سازی با گوگل فعال نیست — env variables ناقص‌اند. اپ فعلاً فقط روی همین دستگاه کار می‌کنه.');
       return;
     }
     setLoading(true);
@@ -47,12 +47,12 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
     try {
       const result = await syncWithDrive();
       if (result.errors.length === 0) {
-        toast.success(`سینک شد — ${result.pushed} آیتم آپلود، ${result.pulled} آیتم دانلود`);
+        toast.success(`همگام‌سازی شد — ${result.pushed} آیتم آپلود، ${result.pulled} آیتم دانلود`);
       } else {
-        toast.error(`سینک ناقص: ${result.errors.join('، ')}`);
+        toast.error(`همگام‌سازی ناقص: ${result.errors.join('، ')}`);
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'خطا در سینک');
+      toast.error(e instanceof Error ? e.message : 'خطا در همگام‌سازی');
     }
     setLoading(false);
     onAuthed?.();
@@ -67,9 +67,9 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
           <div className="flex items-start gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgb(var(--warning) / 0.12)' }}>
             <AlertTriangle size={20} style={{ color: 'rgb(var(--warning))', flexShrink: 0, marginTop: 2 }} />
             <p className="text-xs leading-relaxed flex-1" style={{ color: 'rgb(var(--text))' }}>
-              سینک با گوگل هنوز فعال نیست. در فایل <code dir="ltr" className="px-1.5 py-0.5 rounded" style={{ background: 'rgb(var(--surface-2))' }}>.env</code> پروژه، مقدار <code dir="ltr" className="px-1.5 py-0.5 rounded" style={{ background: 'rgb(var(--surface-2))' }}>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> رو از Google Cloud Console بردار، ذخیره کن و یک بار اپ رو ری‌بیلد کن.
+              همگام‌سازی با گوگل هنوز فعال نیست. در فایل <code dir="ltr" className="px-1.5 py-0.5 rounded" style={{ background: 'rgb(var(--surface-2))' }}>.env</code> پروژه، مقدار <code dir="ltr" className="px-1.5 py-0.5 rounded" style={{ background: 'rgb(var(--surface-2))' }}>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> رو از Google Cloud Console بردار، ذخیره کن و یک بار اپ رو ری‌بیلد کن.
               <br /><br />
-              بدون سینک هم اپ روی همین دستگاه کار می‌کنه.
+              بدون همگام‌سازی هم اپ روی همین دستگاه کار می‌کنه.
             </p>
           </div>
         )}
@@ -124,7 +124,7 @@ export function AuthScreen({ open, onClose, onAuthed }: AuthScreenProps) {
           className="w-full py-3 rounded-2xl text-sm font-medium pressable"
           style={{ background: 'rgb(var(--surface-2))', color: 'rgb(var(--text-muted))' }}
         >
-          فعلاً نه — بدون سینک ادامه بده
+          فعلاً نه — بدون همگام‌سازی ادامه بده
         </button>
       </div>
     </BottomSheet>

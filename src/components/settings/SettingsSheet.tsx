@@ -66,19 +66,19 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
   async function handleSync() {
     if (!signedIn) return;
     if (!configured) {
-      toast.error('سینک با گوگل فعال نیست — env variables ناقص‌اند.');
+      toast.error('همگام‌سازی با گوگل فعال نیست — env variables ناقص‌اند.');
       return;
     }
     setSyncing(true);
     try {
       const result = await syncWithDrive();
       if (result.errors.length === 0) {
-        toast.success(`سینک شد — ${result.pushed} آیتم آپلود، ${result.pulled} آیتم دانلود`);
+        toast.success(`همگام‌سازی شد — ${result.pushed} آیتم آپلود، ${result.pulled} آیتم دانلود`);
       } else {
-        toast.error(`سینک ناقص: ${result.errors.join('، ')}`);
+        toast.error(`همگام‌سازی ناقص: ${result.errors.join('، ')}`);
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'خطا در سینک');
+      toast.error(e instanceof Error ? e.message : 'خطا در همگام‌سازی');
     }
     setSyncing(false);
   }
@@ -336,7 +336,7 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
           {/* Account & Sync */}
           <AccordionItem
             icon={<User size={18} />}
-            title="حساب و سینک"
+            title="حساب و همگام‌سازی"
             isOpen={openSection === 'account'}
             onToggle={() => toggleSection('account')}
           >
@@ -350,7 +350,7 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-text">متصل به گوگل</p>
-                      <p className="text-xs text-text-muted">سینک با درایو فعال است</p>
+                      <p className="text-xs text-text-muted">همگام‌سازی با درایو فعال است</p>
                     </div>
                   </div>
 
@@ -363,7 +363,7 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
                     style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
                   >
                     <RefreshCw size={16} strokeWidth={2.5} className={syncing ? 'animate-spin' : ''} />
-                    {syncing ? 'در حال سینک...' : 'سینک دستی'}
+                    {syncing ? 'در حال همگام‌سازی...' : 'همگام‌سازی دستی'}
                   </button>
 
                   {/* Sign out */}
@@ -378,7 +378,7 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
                   </button>
 
                   <p className="text-xs text-text-muted text-center leading-relaxed">
-                    داده‌ها در Google Drive شما (پوشه‌ی پنهان اپ) ذخیره می‌شن. دکمه «سینک دستی» برای سینک فوری.
+                    داده‌ها در Google Drive شما (پوشه‌ی پنهان اپ) ذخیره می‌شن. دکمه «همگام‌سازی دستی» برای همگام‌سازی فوری.
                   </p>
                 </>
               ) : (
