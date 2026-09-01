@@ -28,14 +28,14 @@ import { formatToman } from '@lib/format';
 import { todayJalaliParts, faNum, type Season } from '@lib/jalali';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { LockBadge } from '@/components/LockBadge';
-import { useAuth } from '@/features/auth/AuthContext';
+import { useGoogleAuth } from '@/features/auth/GoogleAuthContext';
 import { AuthScreen } from '@/features/auth/AuthScreen';
 
 const SEASONS: ReadonlyArray<Season> = ['spring', 'summer', 'autumn', 'winter'];
 
 export default function HomePage() {
   const { ready, digits } = useAppSettings();
-  const { user } = useAuth();
+  const { signedIn } = useGoogleAuth();
   const { years, currentYear, isLoading: yearsLoading } = useAvailableYears();
 
   // Default to current jalali year if no data exists yet

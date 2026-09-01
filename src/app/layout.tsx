@@ -3,7 +3,7 @@ import localFont from 'next/font/local';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { AppSettingsProvider } from '@/features/dashboard/AppSettingsContext';
-import { AuthProvider } from '@/features/auth/AuthContext';
+import { GoogleAuthProvider } from '@/features/auth/GoogleAuthContext';
 import './globals.css';
 
 // Self-hosted Vazirmatn font — works offline without Google Fonts CDN
@@ -129,7 +129,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${vazirmatn.variable} antialiased`}>
-        <AuthProvider>
+        <GoogleAuthProvider>
           <AppSettingsProvider>
             {children}
             <Toaster />
@@ -142,7 +142,7 @@ export default function RootLayout({
               }}
             />
           </AppSettingsProvider>
-        </AuthProvider>
+        </GoogleAuthProvider>
       </body>
     </html>
   );

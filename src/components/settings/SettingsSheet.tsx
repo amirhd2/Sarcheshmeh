@@ -32,8 +32,8 @@ import {
 import { CatalogManagementView } from './CatalogManagementView';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useAuth } from '@/features/auth/AuthContext';
-import { syncAll } from '@/features/auth/sync';
+import { useGoogleAuth } from '@/features/auth/GoogleAuthContext';
+import { syncWithDrive } from '@/features/auth/driveSync';
 import { jalaliYear, todayJalaliParts, faNum } from '@lib/jalali';
 
 interface SettingsSheetProps {
@@ -60,21 +60,25 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
   const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [showCatalogManagement, setShowCatalogManagement] = useState(false);
   const { lockedYears, toggleLock, isLocked } = useLockedYears();
-  const { user, signOut, configured } = useAuth();
+  const { signedIn, signOut, configured } = useGoogleAuth();
   const [syncing, setSyncing] = useState(false);
 
   async function handleSync() {
-    if (!user) return;
+    if (!signedIn) return;
     if (!configured) {
-      toast.error('سینک ابری فعال نیست — env variables ناقص‌اند.');
+      toast.error('سینک با گوگل فعال نیست — env variables ناقص‌اند.');
       return;
     }
     setSyncing(true);
     try {
-      const result = await syncAll(user.id);
-      toast.success(`سینک شد — ${result.pushed} آیتم آپلود، ${result.pulled} آیتم دانلود`);
-    } catch {
-      toast.error('خطا در سینک');
+      const result = await syncWithDrive();
+      if (result.errors.length === 0) {
+        toast.success(`سینک شد — ${result.pushed} آیتم آپلود، ${result.pulled} آیتم دانلود`);
+      } else {
+        toast.error(`سینک ناقص: ${result.errors.join('، ')}`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'خطا در سینک');
     }
     setSyncing(false);
   }
@@ -337,16 +341,16 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
             onToggle={() => toggleSection('account')}
           >
             <div className="py-2 space-y-3">
-              {user ? (
+              {signedIn ? (
                 <>
-                  {/* User info */}
+                  {/* Signed-in state */}
                   <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgb(var(--surface-2))' }}>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgb(var(--brand-primary) / 0.12)' }}>
                       <User size={18} style={{ color: 'rgb(var(--brand-primary))' }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text truncate">{user.email}</p>
-                      <p className="text-xs text-text-muted">وارد شده</p>
+                      <p className="text-sm font-medium text-text">متصل به گوگل</p>
+                      <p className="text-xs text-text-muted">سینک با درایو فعال است</p>
                     </div>
                   </div>
 
@@ -370,11 +374,11 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
                     style={{ background: 'rgb(var(--danger) / 0.10)', color: 'rgb(var(--danger))' }}
                   >
                     <LogOut size={16} strokeWidth={2.5} />
-                    خروج از حساب
+                    قطع اتصال گوگل
                   </button>
 
                   <p className="text-xs text-text-muted text-center leading-relaxed">
-                    داده‌ها به‌صورت خودکار سینک می‌شن. دکمه «سینک دستی» برای سینک فوری.
+                    داده‌ها در Google Drive شما (پوشه‌ی پنهان اپ) ذخیره می‌شن. دکمه «سینک دستی» برای سینک فوری.
                   </p>
                 </>
               ) : (
@@ -385,7 +389,7 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
                   style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
                 >
                   <User size={16} strokeWidth={2.5} />
-                  ورود / ثبت‌نام
+                  ورود با گوگل
                 </button>
               )}
             </div>
