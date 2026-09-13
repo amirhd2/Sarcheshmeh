@@ -50,5 +50,12 @@ test
 prompt
 
 server.log
-# Skills directory
+# Skills directory (internal z.ai framework — not part of user app)
 /skills/
+
+# User-uploaded files (screenshots, debug images, etc.)
+/upload/
+/tool-results/
+
+# Local DB
+/db/*.db-journal
