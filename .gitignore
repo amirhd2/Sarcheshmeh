@@ -52,6 +52,7 @@ prompt
 server.log
 # Skills directory (internal z.ai framework — not part of user app)
 /skills/
+/.zscripts/
 
 # User-uploaded files (screenshots, debug images, etc.)
 /upload/

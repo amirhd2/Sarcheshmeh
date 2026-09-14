@@ -33,37 +33,81 @@
 - **Service Worker** برای پشتیبانی آفلاین
 - **فونت self-hosted Vazirmatn** (بدون وابستگی به Google Fonts)
 
-## 🚀 شروع به کار
+## 🚀 راه‌اندازی و اجرای برنامه از طریق گیت‌هاب
 
-### پیش‌نیازها
+شما می‌توانید برنامه را به چند روش مختلف از طریق گیت‌هاب اجرا کنید:
 
-- Node.js 18+ یا Bun
-- npm/bun/yarn
+### ۱. اجرای آنلاین و مستقیم روی هاست ابری (Deploy to Vercel - رایگان و فوری)
+سریع‌ترین روش برای داشتن یک لینک عمومی و همیشه فعال از روی ریپازیتوری گیت‌هاب:
+1. وارد سایت [Vercel](https://vercel.com) شوید و با اکانت GitHub خود ثبت‌نام / لاگین کنید.
+2. روی دکمه **"Add New..."** و سپس **"Project"** کلیک کنید.
+3. مخزن (Repository) این برنامه را انتخاب کرده و روی **"Import"** کلیک کنید.
+4. بدون نیاز به تغییر تنظیمات، دکمه **"Deploy"** را بزنید. در عرض ۱ دقیقه برنامه بیلد شده و آدرس عمومی آن (مانند `https://sarcheshmeh.vercel.app`) آماده استفاده خواهد بود. با هر بار Push جدید به گیت‌هاب، برنامه به طور خودکار آپدیت می‌شود!
 
-### نصب
+---
 
+### ۲. ارسال پروژه به گیت‌هاب شخصی شما (Push to GitHub)
+اگر می‌خواهید تغییرات را روی حساب گیت‌هاب خود بارگذاری کنید:
+- **روش ساده (از طریق AI Studio):**
+  از منوی بالا/تنظیمات (آیکون چرخ‌دنده یا منوی سه‌نقطه) گزینه **Export to GitHub** را انتخاب کنید تا پروژه مستقیماً به حساب گیت‌هاب شما متصل و پوش شود.
+- **روش از طریق ترمینال (Git CLI):**
+  ```bash
+  # اتصال به مخزن دلخواه گیت‌هاب
+  git remote add origin https://github.com/USERNAME/REPO_NAME.git
+  git branch -M main
+  git push -u origin main
+  ```
+
+---
+
+### ۳. اجرای محلی روی سیستم با کلون از گیت‌هاب (Local Development)
+
+#### پیش‌نیازها:
+- **Node.js 18+** یا **Bun**
+- مدیر بسته `npm`، `pnpm` یا `bun`
+
+#### مراحل اجرا:
 ```bash
-# clone
+# ۱. کلون کردن مخزن از گیت‌هاب
 git clone https://github.com/amirhd2/Sarcheshmeh.git
 cd Sarcheshmeh
 
-# install dependencies
-bun install  # یا npm install
+# ۲. نصب پکیج‌ها و وابستگی‌ها
+npm install
+# یا اگر از bun استفاده می‌کنید:
+# bun install
 
-# کپی فایل env مثال
+# ۳. تنظیم فایل متغیرهای محیطی (اختیاری)
 cp .env.example .env
 
-# اجرای dev server
-bun run dev  # یا npm run dev
+# ۴. اجرای سرور توسعه
+npm run dev
+# یا:
+# bun run dev
 ```
+برنامه بلافاصله روی آدرس **`http://localhost:3000`** بالا می‌آید.
 
-اپ روی http://localhost:3000 در دسترسه.
+---
 
-### ساخت نسخه production
+### ۴. اجرای کانتینری با داکر (Docker & Docker Compose)
+اگر داکر روی سیستم یا سرور شما نصب است، تنها با یک دستور می‌توانید برنامه را ایزوله و آماده اجرا کنید:
 
 ```bash
-bun run build
-bun run start
+# اجرای برنامه در پس‌زمینه با Docker Compose
+docker compose up -d
+
+# یا با دستور مستقیم Docker:
+docker build -t sarcheshmeh .
+docker run -p 3000:3000 sarcheshmeh
+```
+برنامه روی پورت ۳۰۰۰ در دسترس است.
+
+---
+
+### ۵. ساخت نسخه نهایی پروداکشن (Production Build)
+```bash
+npm run build
+npm start
 ```
 
 ## 📁 ساختار پروژه
