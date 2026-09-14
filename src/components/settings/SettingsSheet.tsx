@@ -27,19 +27,16 @@ import { db } from '@/db/schema';
 import {
   Sun, Moon, Monitor, Download, Upload, FileText, Trash2,
   AlertTriangle, Info, ChevronDown, ChevronRight, Database, AlertCircle,
-  Lock, Unlock, User, Cloud, LogOut, RefreshCw,
+  Lock, Unlock,
 } from 'lucide-react';
 import { CatalogManagementView } from './CatalogManagementView';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useGoogleAuth } from '@/features/auth/GoogleAuthContext';
-import { syncWithDrive } from '@/features/auth/driveSync';
 import { jalaliYear, todayJalaliParts, faNum } from '@lib/jalali';
 
 interface SettingsSheetProps {
   open: boolean;
   onClose: () => void;
-  onOpenAuth?: () => void;
 }
 
 type AccordionSection =
@@ -47,12 +44,11 @@ type AccordionSection =
   | 'categories'
   | 'backup'
   | 'yearlock'
-  | 'account'
   | 'danger'
   | 'about'
   | null;
 
-export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps) {
+export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
   const { theme, digits, setTheme, setDigits } = useAppSettings();
   const [openSection, setOpenSection] = useState<AccordionSection>('appearance');
   const [demoCount, setDemoCount] = useState<number | null>(null);
@@ -60,28 +56,6 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
   const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [showCatalogManagement, setShowCatalogManagement] = useState(false);
   const { lockedYears, toggleLock, isLocked } = useLockedYears();
-  const { signedIn, signOut, configured } = useGoogleAuth();
-  const [syncing, setSyncing] = useState(false);
-
-  async function handleSync() {
-    if (!signedIn) return;
-    if (!configured) {
-      toast.error('همگام‌سازی با گوگل فعال نیست — env variables ناقص‌اند.');
-      return;
-    }
-    setSyncing(true);
-    try {
-      const result = await syncWithDrive();
-      if (result.errors.length === 0) {
-        toast.success(`همگام‌سازی شد — ${result.pushed} آیتم آپلود، ${result.pulled} آیتم دانلود`);
-      } else {
-        toast.error(`همگام‌سازی ناقص: ${result.errors.join('، ')}`);
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'خطا در همگام‌سازی');
-    }
-    setSyncing(false);
-  }
 
   // Load years via useLiveQuery instead of manual async loading
   const availableYears = useLiveQuery(async () => {
@@ -330,68 +304,6 @@ export function SettingsSheet({ open, onClose, onOpenAuth }: SettingsSheetProps)
                   پاک‌سازی کامل همه‌چیز
                 </button>
               </div>
-            </div>
-          </AccordionItem>
-
-          {/* Account & Sync */}
-          <AccordionItem
-            icon={<User size={18} />}
-            title="حساب و همگام‌سازی"
-            isOpen={openSection === 'account'}
-            onToggle={() => toggleSection('account')}
-          >
-            <div className="py-2 space-y-3">
-              {signedIn ? (
-                <>
-                  {/* Signed-in state */}
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgb(var(--surface-2))' }}>
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgb(var(--brand-primary) / 0.12)' }}>
-                      <User size={18} style={{ color: 'rgb(var(--brand-primary))' }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text">متصل به گوگل</p>
-                      <p className="text-xs text-text-muted">همگام‌سازی با درایو فعال است</p>
-                    </div>
-                  </div>
-
-                  {/* Sync button */}
-                  <button
-                    type="button"
-                    onClick={handleSync}
-                    disabled={syncing}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium pressable"
-                    style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
-                  >
-                    <RefreshCw size={16} strokeWidth={2.5} className={syncing ? 'animate-spin' : ''} />
-                    {syncing ? 'در حال همگام‌سازی...' : 'همگام‌سازی دستی'}
-                  </button>
-
-                  {/* Sign out */}
-                  <button
-                    type="button"
-                    onClick={async () => { await signOut(); }}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium pressable"
-                    style={{ background: 'rgb(var(--danger) / 0.10)', color: 'rgb(var(--danger))' }}
-                  >
-                    <LogOut size={16} strokeWidth={2.5} />
-                    قطع اتصال گوگل
-                  </button>
-
-                  <p className="text-xs text-text-muted text-center leading-relaxed">
-                    داده‌ها در Google Drive شما (پوشه‌ی پنهان اپ) ذخیره می‌شن. دکمه «همگام‌سازی دستی» برای همگام‌سازی فوری.
-                  </p>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => { onClose(); onOpenAuth?.(); }}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium pressable"
-                  style={{ background: 'rgb(var(--brand-primary) / 0.10)', color: 'rgb(var(--brand-primary))' }}
-                >
-                  <User size={16} strokeWidth={2.5} />
-                  ورود با گوگل
-                </button>
-              )}
             </div>
           </AccordionItem>
 

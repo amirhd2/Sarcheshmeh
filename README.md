@@ -7,9 +7,8 @@
 ## ✨ ویژگی‌ها
 
 - **تقویم شمسی (جلالی)** کامل — فصل‌ها، ماه‌ها، سال‌ها
-- **آفلاین‌اول** — تمام داده‌ها در IndexedDB ذخیره می‌شن، بدون نیاز به اینترنت
+- **آفلاین‌اول** — تمام داده‌ها در IndexedDB ذخیره می‌شن، بدون نیاز به اینترنت یا حساب کاربری
 - **PWA** — قابل نصب روی iOS/Android با اسپلش صفحه و آیکون
-- **همگام‌سازی اختیاری با Google Drive** — بکاپ ابری و استفاده‌ی چنددستگاهی
 - **تم روشن/تاریک** خودکار با تشخیص سیستم‌عامل
 - **RTL کامل** — طراحی فارس و راست‌به‌چپ
 - **فرم ثبت دو مرحله‌ای** با کیپد سفارشی و wheel picker شمسی
@@ -20,6 +19,7 @@
 - **قفل سال** برای جلوگیری از ویرایش سال‌های گذشته
 - **خروجی PDF** برای گزارش‌های سالانه
 - **Autocomplete توضیح** برای ورود سریع‌تر
+- **بکاپ/ریستور** دستی به‌صورت JSON و CSV
 
 ## 🛠 استک فنی
 
@@ -32,7 +32,6 @@
 - **dnd-kit** برای drag-to-reorder
 - **Service Worker** برای پشتیبانی آفلاین
 - **فونت self-hosted Vazirmatn** (بدون وابستگی به Google Fonts)
-- **Google Identity Services** برای OAuth و Google Drive API برای سینک
 
 ## 🚀 شروع به کار
 
@@ -67,28 +66,6 @@ bun run build
 bun run start
 ```
 
-## ☁️ فعال‌سازی همگام‌سازی با Google Drive (اختیاری)
-
-بدون این، اپ فقط روی همون دستگاه کار می‌کنه. برای همگام‌سازی ابری:
-
-1. به [Google Cloud Console](https://console.cloud.google.com) برو
-2. یک پروژه بساز → **Google Drive API** رو Enable کن
-3. **OAuth consent screen** رو تنظیم کن (External, شما به‌عنوان test user)
-4. به **Credentials → Create Credentials → OAuth client ID** برو
-5. نوع: **Web application**
-6. در **Authorized JavaScript origins** این‌ها رو اضافه کن:
-   - `http://localhost:3000`
-   - `http://localhost:81`
-   - (اگه deploy کردی، آدرس دامنه‌ت رو هم اضافه کن)
-7. **Client ID** ساخته‌شده رو کپی کن
-8. در فایل `.env`:
-   ```
-   NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-client-id-here.apps.googleusercontent.com
-   ```
-9. Rebuild کن
-
-اپ فقط به `drive.appdata` scope دسترسی داره — یعنی فقط به **پوشه‌ی پنهان مخصوص اپ** در Google Drive شما، نه بقیه‌ی فایل‌ها. این از نظر حریم خصوصی امن‌ترین حالت ممکنه.
-
 ## 📁 ساختار پروژه
 
 ```
@@ -101,19 +78,21 @@ src/
 │   ├── settings/              # پنل تنظیمات
 │   └── ...
 ├── features/
-│   ├── auth/                  # Google Auth + Drive sync
 │   ├── dashboard/             # Dashboard logic
 │   ├── transaction-form/      # فرم ثبت ۲مرحله‌ای
 │   ├── reports/               # نمودارها + PDF export
 │   └── settings/              # Catalog CRUD + locked years
 ├── lib/                       # ابزارهای کمکی
 │   ├── jalali.ts              # تقویم شمسی + faNum
-│   ├── format.ts              # فرمت اعداد fa/en
-│   └── google.ts              # GIS loader + token client
+│   └── format.ts              # فرمت اعداد fa/en
 └── db/
     ├── schema.ts              # Dexie schema + domain types
     └── seed.ts                # داده‌های نمونه
 ```
+
+## 🔒 حریم خصوصی
+
+تمام داده‌ها فقط روی همین دستگاه شما ذخیره می‌شن (IndexedDB مرورگر). هیچ سرور خارجی، حساب کاربری، یا سرویس ابری وجود نداره. برای انتقال داده‌ها بین دستگاه‌ها، از بخش «بکاپ/ریستور» در تنظیمات استفاده کنید.
 
 ## 📜 لایسنس
 

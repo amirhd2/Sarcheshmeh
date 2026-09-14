@@ -3,7 +3,6 @@ import localFont from 'next/font/local';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { AppSettingsProvider } from '@/features/dashboard/AppSettingsContext';
-import { GoogleAuthProvider } from '@/features/auth/GoogleAuthContext';
 import './globals.css';
 
 // Self-hosted Vazirmatn font — works offline without Google Fonts CDN
@@ -129,20 +128,18 @@ export default function RootLayout({
         />
       </head>
       <body className={`${vazirmatn.variable} antialiased`}>
-        <GoogleAuthProvider>
-          <AppSettingsProvider>
-            {children}
-            <Toaster />
-            <SonnerToaster
-              position="bottom-center"
-              toastOptions={{
-                style: {
-                  marginBottom: 'calc(19px + env(safe-area-inset-bottom, 0px))',
-                },
-              }}
-            />
-          </AppSettingsProvider>
-        </GoogleAuthProvider>
+        <AppSettingsProvider>
+          {children}
+          <Toaster />
+          <SonnerToaster
+            position="bottom-center"
+            toastOptions={{
+              style: {
+                marginBottom: 'calc(19px + env(safe-area-inset-bottom, 0px))',
+              },
+            }}
+          />
+        </AppSettingsProvider>
       </body>
     </html>
   );

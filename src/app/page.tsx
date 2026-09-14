@@ -28,14 +28,11 @@ import { formatToman } from '@lib/format';
 import { todayJalaliParts, faNum, type Season } from '@lib/jalali';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { LockBadge } from '@/components/LockBadge';
-import { useGoogleAuth } from '@/features/auth/GoogleAuthContext';
-import { AuthScreen } from '@/features/auth/AuthScreen';
 
 const SEASONS: ReadonlyArray<Season> = ['spring', 'summer', 'autumn', 'winter'];
 
 export default function HomePage() {
   const { ready, digits } = useAppSettings();
-  const { signedIn } = useGoogleAuth();
   const { years, currentYear, isLoading: yearsLoading } = useAvailableYears();
 
   // Default to current jalali year if no data exists yet
@@ -54,9 +51,6 @@ export default function HomePage() {
 
   // Settings sheet state
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  // Auth sheet state — non-blocking, can be opened from settings
-  const [authOpen, setAuthOpen] = useState(false);
 
   // Reports view state
   const [showReports, setShowReports] = useState(false);
@@ -149,10 +143,7 @@ export default function HomePage() {
       )}
 
       {/* Settings sheet — opened from the header settings icon */}
-      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} onOpenAuth={() => setAuthOpen(true)} />
-
-      {/* Auth sheet — non-blocking, can be opened from settings */}
-      <AuthScreen open={authOpen} onClose={() => setAuthOpen(false)} onAuthed={() => setAuthOpen(false)} />
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {/* Reports view — lazy loaded to avoid loading recharts on initial page load */}
       {showReports && (
