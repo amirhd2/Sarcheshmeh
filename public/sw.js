@@ -1,14 +1,16 @@
 /* =========================================================================
-   سرچشمه — Service Worker
+   سرچشمه — Service Worker (v2 — network-first for HTML, cache-first for assets)
    =========================================================================
-   Caches all app assets for complete offline functionality.
-   Strategy:
-   - Install: precache core assets (HTML, CSS, JS, fonts, icons)
-   - Fetch: cache-first for same-origin, network-first for others
-   - Activate: clean up old caches
+   v2 fixes the "stale UI" problem:
+   - Navigation requests (HTML pages) → network-first, fall back to cache
+     so users always get the latest UI on refresh, but can still use the
+     app offline.
+   - Static assets (JS chunks, CSS, fonts, icons) → cache-first (they have
+     hashed filenames so they're safe to cache forever).
+   - Bumping CACHE_NAME to v2 automatically invalidates the old v1 cache.
    ========================================================================= */
 
-const CACHE_NAME = 'sarcheshmeh-v1';
+const CACHE_NAME = 'sarcheshmeh-v2';
 const PRECACHE_URLS = [
   '/',
   '/manifest.webmanifest',
@@ -35,24 +37,30 @@ self.addEventListener('install', (event) => {
       });
     })
   );
+  // Force the new SW to take over immediately, even if an old SW is active.
   self.skipWaiting();
 });
 
-// Activate — clean up old caches
+// Activate — clean up ALL old caches (any cache that isn't the current version)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
           .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+          .map((name) => {
+            console.log('[SW] Deleting old cache:', name);
+            return caches.delete(name);
+          })
       );
+    }).then(() => {
+      // Take control of all open clients immediately.
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
 });
 
-// Fetch — cache-first for same-origin, network-first for cross-origin
+// Fetch handler
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
@@ -63,38 +71,48 @@ self.addEventListener('fetch', (event) => {
   if (request.url.startsWith('chrome-extension://')) return;
 
   const isSameOrigin = request.url.startsWith(self.location.origin);
+  if (!isSameOrigin) return; // let cross-origin requests pass through
 
-  if (isSameOrigin) {
-    // Cache-first for same-origin
+  // ----- Navigation requests (HTML pages) → network-first -----
+  if (request.mode === 'navigate') {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) {
-          // Update cache in background
-          fetch(request).then((response) => {
-            if (response.ok) {
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(request, response.clone());
-              });
-            }
-          }).catch(() => {});
-          return cached;
-        }
-        // Not in cache — fetch and cache
-        return fetch(request).then((response) => {
+      fetch(request)
+        .then((response) => {
+          // Cache the fresh HTML for next time
           if (response.ok) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, clone);
-            });
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
           return response;
-        }).catch(() => {
-          // Offline and not cached — return cached index.html as fallback
-          return caches.match('/');
-        });
-      })
+        })
+        .catch(() => {
+          // Offline — return cached HTML (or root as fallback)
+          return caches.match(request).then((cached) => cached || caches.match('/'));
+        })
     );
+    return;
   }
-  // For cross-origin requests (e.g., Google Fonts), just try network
-  // and don't cache — we've self-hosted everything we need.
+
+  // ----- Static assets → cache-first (hashed filenames are safe) -----
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) {
+        // Update cache in background (stale-while-revalidate)
+        fetch(request).then((response) => {
+          if (response.ok) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+          }
+        }).catch(() => {});
+        return cached;
+      }
+      // Not in cache — fetch and cache
+      return fetch(request).then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      }).catch(() => caches.match('/'));
+    })
+  );
 });
