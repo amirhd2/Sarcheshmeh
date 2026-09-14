@@ -213,10 +213,12 @@ export function toEnglishDigits(s: string | number): string {
 /** ISO date range (inclusive) for a Jalali month. */
 export function jalaliMonthRange(jy: number, jm: number): { start: string; end: string } {
   const padded = `${jy}-${String(jm).padStart(2, '0')}-01`;
-  // Parse as jalali input, then endOf('month') on the jalali instance,
-  // then format as gregory (default).
   const start = dayjs(padded, { jalali: true }).format('YYYY-MM-DD');
-  const end = dayjs(padded, { jalali: true }).endOf('month').format('YYYY-MM-DD');
+  const end = dayjs(padded, { jalali: true })
+    .calendar('jalali')
+    .endOf('month')
+    .calendar('gregory')
+    .format('YYYY-MM-DD');
   return { start, end };
 }
 
@@ -226,7 +228,11 @@ export function jalaliSeasonRange(jy: number, season: Season): { start: string; 
   const startPadded = `${jy}-${String(months[0]).padStart(2, '0')}-01`;
   const endPadded = `${jy}-${String(months[2]).padStart(2, '0')}-01`;
   const start = dayjs(startPadded, { jalali: true }).format('YYYY-MM-DD');
-  const end = dayjs(endPadded, { jalali: true }).endOf('month').format('YYYY-MM-DD');
+  const end = dayjs(endPadded, { jalali: true })
+    .calendar('jalali')
+    .endOf('month')
+    .calendar('gregory')
+    .format('YYYY-MM-DD');
   return { start, end };
 }
 
@@ -234,11 +240,12 @@ export function jalaliSeasonRange(jy: number, season: Season): { start: string; 
 export function jalaliYearRange(jy: number): { start: string; end: string } {
   const padded = `${jy}-01-01`;
   const start = dayjs(padded, { jalali: true }).format('YYYY-MM-DD');
-  // Use endOf('jYear') — the jalali-plugin-dayjs uses 'jYear' for
-  // jalali year. But to be safe, we compute the end of Esfand (month 12)
-  // directly, which is always the last day of the jalali year.
   const esfandPadded = `${jy}-12-01`;
-  const end = dayjs(esfandPadded, { jalali: true }).endOf('month').format('YYYY-MM-DD');
+  const end = dayjs(esfandPadded, { jalali: true })
+    .calendar('jalali')
+    .endOf('month')
+    .calendar('gregory')
+    .format('YYYY-MM-DD');
   return { start, end };
 }
 

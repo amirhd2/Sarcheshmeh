@@ -49,9 +49,8 @@ function daysInJalaliMonth(jy: number, jm: number): number {
   if (jm <= 6) return 31;
   if (jm <= 11) return 30;
   // Esfand (month 12) — 30 in leap years, 29 otherwise
-  // Use dayjs-jalali to compute: last day of Esfand = endOf('jMonth').date()
   const padded = `${jy}-12-01`;
-  return dayjs(padded, { jalali: true }).endOf('month').date();
+  return dayjs(padded, { jalali: true }).calendar('jalali').endOf('month').date();
 }
 
 export function JalaliDatePicker({ value, onChange, digits }: JalaliDatePickerProps) {

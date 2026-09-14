@@ -107,7 +107,7 @@ function daysInJalaliMonth(jy: number, jm: number): number {
   if (jm <= 11) return 30;
   // Esfand — use dayjs to compute
   const padded = `${jy}-12-01`;
-  return dayjs(padded, { jalali: true }).endOf('month').date();
+  return dayjs(padded, { jalali: true }).calendar('jalali').endOf('month').date();
 }
 
 /**

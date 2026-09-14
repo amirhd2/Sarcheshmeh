@@ -32,6 +32,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
+import dayjs from 'dayjs';
 import { Check, ChevronRight, Calendar, Eraser, Plus, Repeat } from 'lucide-react';
 import { NumberPad } from '@/components/NumberPad';
 import { JalaliDatePicker } from '@/components/JalaliDatePicker';
@@ -133,10 +134,7 @@ export function TransactionForm({
     [todayParts],
   );
   const yesterdayISO = useMemo(() => {
-    // Subtract 1 jalali day — use dayjs for safety (handles month boundaries)
-    const d = new Date(todayISO);
-    d.setDate(d.getDate() - 1);
-    return d.toISOString().slice(0, 10);
+    return dayjs(todayISO).subtract(1, 'day').format('YYYY-MM-DD');
   }, [todayISO]);
 
   // --- Submit ---

@@ -33,13 +33,18 @@ export interface SeasonTransaction {
 
 export function useSeasonTransactions(jy: number | null, season: Season | null) {
   const txs = useLiveQuery(async () => {
-    if (jy === null || season === null) return [];
-    const { start, end } = jalaliSeasonRange(jy, season);
-    return db.transactions
-      .where('date')
-      .between(start, end, true, true)
-      .filter((t) => !t.deletedAt)
-      .toArray();
+    try {
+      if (jy === null || season === null) return [];
+      const { start, end } = jalaliSeasonRange(jy, season);
+      return await db.transactions
+        .where('date')
+        .between(start, end, true, true)
+        .filter((t) => !t.deletedAt)
+        .toArray();
+    } catch (err) {
+      console.warn('Failed to query season transactions:', err);
+      return [];
+    }
   }, [jy, season]);
 
   return useMemo(() => {
@@ -53,7 +58,13 @@ export function useMonthSummaries(jy: number | null, season: Season | null) {
   const { transactions, isLoading } = useSeasonTransactions(jy, season);
 
   return useMemo(() => {
-    if (isLoading || !transactions.length) return { months: [], isLoading };
+    const seasonMonths = getSeasonMonths(season);
+    if (isLoading || !transactions.length) {
+      return {
+        months: seasonMonths.map((m) => ({ month: m, totalAmount: 0, totalCount: 0 })),
+        isLoading,
+      };
+    }
     const byMonth = new Map<number, { total: number; count: number }>();
     for (const tx of transactions) {
       const m = jalaliMonth(tx.date);
@@ -62,7 +73,6 @@ export function useMonthSummaries(jy: number | null, season: Season | null) {
       existing.count += 1;
       byMonth.set(m, existing);
     }
-    const seasonMonths = getSeasonMonths(season);
     const months: MonthSummary[] = seasonMonths.map((m) => {
       const data = byMonth.get(m);
       return { month: m, totalAmount: data?.total ?? 0, totalCount: data?.count ?? 0 };
