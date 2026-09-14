@@ -16,7 +16,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-const MIN_SPLASH_DURATION_MS = 1500;
+const MIN_SPLASH_DURATION_MS = 1200;
+const MAX_SPLASH_TIMEOUT_MS = 2500;
 
 export function AppSplash({ ready }: { ready: boolean }) {
   const [minDurationPassed, setMinDurationPassed] = useState(false);
@@ -29,13 +30,18 @@ export function AppSplash({ ready }: { ready: boolean }) {
     return () => window.clearTimeout(timer);
   }, []);
 
-  // Hide splash only when BOTH conditions are met:
-  // 1. Minimum duration has passed (1.5s)
-  // 2. App is ready (DB initialized)
+  // Safety fallback: dismiss splash after MAX_SPLASH_TIMEOUT_MS unconditionally
+  useEffect(() => {
+    const maxTimer = window.setTimeout(() => {
+      setShowSplash(false);
+    }, MAX_SPLASH_TIMEOUT_MS);
+    return () => window.clearTimeout(maxTimer);
+  }, []);
+
+  // Hide splash when both conditions are met (or when ready is true after min duration)
   useEffect(() => {
     if (minDurationPassed && ready) {
-      // Small delay to let the fade-out animation start
-      const timer = window.setTimeout(() => setShowSplash(false), 300);
+      const timer = window.setTimeout(() => setShowSplash(false), 250);
       return () => window.clearTimeout(timer);
     }
   }, [minDurationPassed, ready]);
@@ -46,17 +52,17 @@ export function AppSplash({ ready }: { ready: boolean }) {
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none"
           style={{
             background: 'rgb(var(--bg))',
           }}
         >
           {/* Icon with subtle scale-in animation */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 1 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col items-center"
           >
             {/* Drop icon */}
@@ -81,33 +87,18 @@ export function AppSplash({ ready }: { ready: boolean }) {
             </div>
 
             {/* App name */}
-            <motion.h1
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              className="text-xl font-bold text-text mb-1"
-            >
+            <h1 className="text-xl font-bold text-text mb-1">
               سرچشمه
-            </motion.h1>
+            </h1>
 
             {/* Tagline */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-              className="text-xs text-text-muted"
-            >
+            <p className="text-xs text-text-muted">
               سرچشمه‌ی درآمدت رو ببین
-            </motion.p>
+            </p>
           </motion.div>
 
           {/* Loading indicator — subtle dots */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.5 }}
-            className="absolute bottom-20 flex gap-1.5"
-          >
+          <div className="absolute bottom-20 flex gap-1.5">
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
@@ -122,7 +113,7 @@ export function AppSplash({ ready }: { ready: boolean }) {
                 style={{ background: 'rgb(var(--brand-primary))' }}
               />
             ))}
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

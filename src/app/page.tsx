@@ -59,8 +59,8 @@ export default function HomePage() {
   const { isLocked } = useLockedYears();
   const yearLocked = isLocked(effectiveYear);
 
-  // App is ready when DB is loaded and years are available
-  const isReady = ready && !yearsLoading;
+  // App is ready when DB is loaded or years are available
+  const isReady = ready || !yearsLoading;
 
   const yearsToShow = years.length > 0 ? years : [effectiveYear];
 

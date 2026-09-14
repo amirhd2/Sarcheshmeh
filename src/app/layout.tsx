@@ -112,16 +112,24 @@ export default function RootLayout({
             media={splash.media}
           />
         ))}
-        {/* Service Worker registration — enables full offline support */}
+        {/* Service Worker registration — enables full offline support in production, unregisters in dev */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function(e) {
-                    console.warn('SW registration failed:', e);
+                if (window.location.hostname !== 'localhost' && !window.location.hostname.includes('ais-dev-')) {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js').catch(function(e) {
+                      console.warn('SW registration failed:', e);
+                    });
                   });
-                });
+                } else {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for (var r of registrations) {
+                      r.unregister();
+                    }
+                  });
+                }
               }
             `,
           }}

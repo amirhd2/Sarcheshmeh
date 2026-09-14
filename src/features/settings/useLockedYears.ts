@@ -16,7 +16,14 @@ export function useLockedYears(): {
   toggleLock: (year: number) => Promise<void>;
   isLocked: (year: number) => boolean;
 } {
-  const settings = useLiveQuery(() => db.settings.get('singleton'), []);
+  const settings = useLiveQuery(async () => {
+    try {
+      return await db.settings.get('singleton');
+    } catch (err) {
+      console.warn('Failed to read settings in useLockedYears:', err);
+      return undefined;
+    }
+  }, []);
   const lockedYears = settings?.lockedYears ?? [];
 
   async function toggleLock(year: number) {

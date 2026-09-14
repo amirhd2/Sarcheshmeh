@@ -12,6 +12,7 @@
    ========================================================================= */
 
 import Dexie, { type Table } from 'dexie';
+import { indexedDB as fakeIndexedDB, IDBKeyRange as fakeIDBKeyRange } from 'fake-indexeddb';
 
 /* -------------------------------------------------------------------------
    Domain types
@@ -102,7 +103,15 @@ export class SarcheshmehDB extends Dexie {
   settings!: Table<Settings, string>;
 
   constructor() {
-    super('sarcheshmeh');
+    let options: { indexedDB?: IDBFactory; IDBKeyRange?: unknown } | undefined;
+    try {
+      if (typeof window === 'undefined' || typeof indexedDB === 'undefined' || !window.indexedDB) {
+        options = { indexedDB: fakeIndexedDB as unknown as IDBFactory, IDBKeyRange: fakeIDBKeyRange };
+      }
+    } catch {
+      options = { indexedDB: fakeIndexedDB as unknown as IDBFactory, IDBKeyRange: fakeIDBKeyRange };
+    }
+    super('sarcheshmeh', options);
 
     // Schema v1 — initial release.
     // Compound-friendly indexes chosen so the common UI queries

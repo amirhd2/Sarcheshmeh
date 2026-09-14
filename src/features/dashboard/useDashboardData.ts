@@ -17,7 +17,7 @@
 
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/schema';
-import { jalaliYearRange, jalaliSeason, jalaliYear, type Season } from '@lib/jalali';
+import { jalaliYearRange, jalaliSeason, jalaliYear, todayJalaliParts, type Season } from '@lib/jalali';
 import { useMemo } from 'react';
 
 export interface SeasonSummary {
@@ -56,18 +56,30 @@ export function useAvailableYears(): {
   isLoading: boolean;
 } {
   const allDates = useLiveQuery(async () => {
-    const txs = await db.transactions.toArray();
-    return txs.map((t) => t.date);
+    try {
+      const txs = await db.transactions.toArray();
+      return txs.map((t) => t.date);
+    } catch (err) {
+      console.warn('Failed to query transactions dates:', err);
+      return [];
+    }
   }, []);
 
   return useMemo(() => {
-    if (!allDates) return { years: [], currentYear: null, isLoading: true };
+    const currentJalali = todayJalaliParts().jy;
+    if (!allDates) {
+      return {
+        years: [currentJalali],
+        currentYear: currentJalali,
+        isLoading: false,
+      };
+    }
     const yearSet = new Set<number>();
     for (const iso of allDates) yearSet.add(jalaliYear(iso));
     const years = [...yearSet].sort((a, b) => b - a);
     return {
-      years,
-      currentYear: years[0] ?? null,
+      years: years.length > 0 ? years : [currentJalali],
+      currentYear: years[0] ?? currentJalali,
       isLoading: false,
     };
   }, [allDates]);
@@ -82,15 +94,20 @@ export function useYearSummary(jy: number | null): {
   isLoading: boolean;
 } {
   const txs = useLiveQuery(async () => {
-    if (jy === null) return [];
-    const { start, end } = jalaliYearRange(jy);
-    // Dexie's where('date').between() is inclusive by default on both
-    // ends, which is what we want. We also filter out soft-deleted rows.
-    return db.transactions
-      .where('date')
-      .between(start, end, true, true)
-      .filter((t) => !t.deletedAt)
-      .toArray();
+    try {
+      if (jy === null) return [];
+      const { start, end } = jalaliYearRange(jy);
+      // Dexie's where('date').between() is inclusive by default on both
+      // ends, which is what we want. We also filter out soft-deleted rows.
+      return await db.transactions
+        .where('date')
+        .between(start, end, true, true)
+        .filter((t) => !t.deletedAt)
+        .toArray();
+    } catch (err) {
+      console.warn('Failed to query year summary:', err);
+      return [];
+    }
   }, [jy]);
 
   return useMemo(() => {

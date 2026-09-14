@@ -33,24 +33,34 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
   const [theme, setThemeState] = useState<ThemePref>('system');
   const [digits, setDigitsState] = useState<DigitPref>('fa');
 
-  // Boot DB on mount
+  // Boot DB on mount with timeout guard
   useEffect(() => {
     let cancelled = false;
+    const safetyTimeout = setTimeout(() => {
+      if (!cancelled) {
+        setReady(true);
+      }
+    }, 1500);
+
     (async () => {
       try {
         const s = await initDatabase();
         if (cancelled) return;
+        clearTimeout(safetyTimeout);
         setThemeState(s.theme);
         setDigitsState(s.digits);
         setReady(true);
       } catch (e) {
         console.error('Failed to initialize database:', e);
-        // Even on failure, mark ready so the UI can show an error
+        if (cancelled) return;
+        clearTimeout(safetyTimeout);
+        // Even on failure, mark ready so the UI can show
         setReady(true);
       }
     })();
     return () => {
       cancelled = true;
+      clearTimeout(safetyTimeout);
     };
   }, []);
 
