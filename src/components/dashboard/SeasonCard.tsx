@@ -39,10 +39,10 @@ interface SeasonCardProps {
 }
 
 const SEASON_IMAGES: Record<Season, string> = {
-  spring: '/icons/spring.webp',
-  summer: '/icons/summer.webp',
-  autumn: '/icons/autumn.webp',
-  winter: '/icons/winter.webp',
+  spring: '/icons/spring.png',
+  summer: '/icons/summer.png',
+  autumn: '/icons/autumn.png',
+  winter: '/icons/winter.png',
 };
 
 /** Season accent colors — match the tint but a bit deeper for contrast. */
