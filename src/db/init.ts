@@ -1,10 +1,11 @@
 /* =========================================================================
-   سرچشمه — DB initialization & first-run seed
+   ثمر — DB initialization & first-run seed
    =========================================================================
    On first launch:
-   1. Write default categories & destinations (if missing)
-   2. Write singleton settings row (if missing)
-   3. Insert sample transactions (if sampleDataLoaded === false)
+   1. Migrate legacy 'thamar' database to 'thamar' if present
+   2. Write default categories & destinations (if missing)
+   3. Write singleton settings row (if missing)
+   4. Insert sample transactions (if sampleDataLoaded === false)
 
    All sample inserts are flagged `isDemo: true` so the user can later
    wipe ONLY sample data from Settings → "delete sample data" without
@@ -13,6 +14,7 @@
    This module is idempotent — safe to call on every app boot.
    ========================================================================= */
 
+import Dexie from 'dexie';
 import { db, SCHEMA_VERSION } from './schema';
 import type { Settings } from './schema';
 import { buildDefaultCategories, buildDefaultDestinations, buildSampleTransactions } from './seed';
@@ -27,6 +29,42 @@ export async function getSettings(): Promise<Settings | null> {
 
 /** Initialize DB on app boot. Idempotent. Returns the active settings. */
 export async function initDatabase(): Promise<Settings> {
+  // 0. Safe automatic migration from legacy 'thamar' database to 'thamar'
+  try {
+    if (typeof window !== 'undefined' && typeof indexedDB !== 'undefined' && indexedDB.databases) {
+      const dbs = await indexedDB.databases();
+      const hasOldDb = dbs.some((d) => d.name === 'thamar');
+      if (hasOldDb) {
+        const txCount = await db.transactions.count();
+        if (txCount === 0) {
+          const oldDb = new Dexie('thamar');
+          oldDb.version(1).stores({
+            transactions:
+              'id, type, date, categoryId, destinationId, isDemo, updatedAt, deletedAt, [date+isDemo], [categoryId+date], [destinationId+date]',
+            categories: 'id, order, isDemo, updatedAt, deletedAt',
+            destinations: 'id, order, isDemo, updatedAt, deletedAt',
+            settings: 'id',
+          });
+          const [oldTx, oldCat, oldDst, oldSet] = await Promise.all([
+            oldDb.table('transactions').toArray(),
+            oldDb.table('categories').toArray(),
+            oldDb.table('destinations').toArray(),
+            oldDb.table('settings').get(SETTINGS_ID),
+          ]);
+          if (oldTx.length || oldCat.length || oldDst.length) {
+            if (oldTx.length) await db.transactions.bulkPut(oldTx);
+            if (oldCat.length) await db.categories.bulkPut(oldCat);
+            if (oldDst.length) await db.destinations.bulkPut(oldDst);
+            if (oldSet) await db.settings.put(oldSet);
+          }
+          await oldDb.close();
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Auto-migration from legacy thamar database:', err);
+  }
+
   // 1. Ensure settings row exists
   let settings = await getSettings();
   if (!settings) {

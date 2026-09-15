@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — YearSwitcher
+   ثمر — YearSwitcher
    =========================================================================
    A chip-style year selector. Shows the current jalali year as a button;
    tapping it opens a small dropdown of all years present in the data.

@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — Icon renderer
+   ثمر — Icon renderer
    =========================================================================
    Renders a Lucide icon by name. Used by category/destination chips.
    Falls back to a small colored dot if the name is not a valid Lucide
@@ -32,6 +32,18 @@ export function IconRenderer({ name, fallbackColor, ...rest }: IconRendererProps
 
   if (Icon) {
     return <Icon {...rest} />;
+  }
+
+  // If the name is an emoji, render it clearly
+  if (name && !/^[a-zA-Z0-9_-]+$/.test(name)) {
+    return (
+      <span
+        className="inline-flex items-center justify-center leading-none select-none"
+        style={{ fontSize: rest.size ?? 20 }}
+      >
+        {name}
+      </span>
+    );
   }
 
   // Fallback — colored dot

@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — RepeatDialog
+   ثمر — RepeatDialog
    =========================================================================
    A bottom sheet that lets the user set up recurring transactions.
    Options:

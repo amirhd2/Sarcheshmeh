@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — Backup / Restore / CSV / Wipe
+   ثمر — Backup / Restore / CSV / Wipe
    =========================================================================
    PRD §8 + §9 (Settings):
    - Backup: download JSON with all transactions, categories, destinations, settings
@@ -27,7 +27,7 @@ export async function buildBackup(): Promise<BackupFile> {
   ]);
 
   return {
-    app: 'sarcheshmeh',
+    app: 'thamar',
     schemaVersion: SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
     data: {
@@ -56,7 +56,7 @@ export function downloadJSON(data: unknown, filename: string): void {
 export async function downloadBackup(): Promise<void> {
   const backup = await buildBackup();
   const date = new Date().toISOString().slice(0, 10);
-  downloadJSON(backup, `sarcheshmeh-backup-${date}.json`);
+  downloadJSON(backup, `thamar-backup-${date}.json`);
 }
 
 /** Restore from a backup file. Mode: 'merge' or 'replace'. */
@@ -69,8 +69,8 @@ export async function restoreBackup(file: File, mode: 'merge' | 'replace'): Prom
     throw new Error('فایل نامعتبر — JSON نیست');
   }
 
-  if (backup.app !== 'sarcheshmeh') {
-    throw new Error('فایل متعلق به سرچشمه نیست');
+  if (backup.app !== 'thamar' && (backup.app as string) !== 'sarcheshmeh') {
+    throw new Error('فایل متعلق به ثمر نیست');
   }
 
   if (mode === 'replace') {
@@ -125,7 +125,7 @@ export async function exportCSV(): Promise<void> {
   const a = document.createElement('a');
   a.href = url;
   const date = new Date().toISOString().slice(0, 10);
-  a.download = `sarcheshmeh-${date}.csv`;
+  a.download = `thamar-${date}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

@@ -74,6 +74,13 @@ export const SEASON_TINT_VAR: Record<Season, string> = {
   winter: '--season-winter',
 };
 
+export const SEASON_ACCENT_VAR: Record<Season, string> = {
+  spring: '#C9718F', // rose
+  summer: '#D9963E', // amber
+  autumn: '#C96F5E', // terracotta
+  winter: '#6B8CC3', // blue-grey
+};
+
 export interface JalaliParts {
   jy: number;
   jm: number;

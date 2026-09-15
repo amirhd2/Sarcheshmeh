@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — WheelPicker
+   ثمر — WheelPicker
    =========================================================================
    A single-column iOS-style wheel picker. Used 3× side-by-side for the
    Jalali date picker (year/month/day).

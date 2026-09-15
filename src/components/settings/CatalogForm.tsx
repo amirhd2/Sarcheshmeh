@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — CatalogForm
+   ثمر — CatalogForm
    =========================================================================
    Add or edit a category/destination. Fields:
    - Name (text input)

@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — NoteInput
+   ثمر — NoteInput
    =========================================================================
    Text input with autocomplete dropdown for transaction notes.
    Suggestions come from the user's previous notes (most used first).

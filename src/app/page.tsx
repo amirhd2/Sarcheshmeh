@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — Dashboard + Season View (Phase 1 · Steps 4-8)
+   ثمر — Dashboard + Season View (Phase 1 · Steps 4-8)
    =========================================================================
    The root page of the app. Shows:
    - Dashboard: header + year total + season cards grid + FAB
@@ -11,6 +11,7 @@
    ========================================================================= */
 
 import { useMemo, useState, lazy, Suspense } from 'react';
+import Image from 'next/image';
 import { Settings as SettingsIcon, BarChart3 } from 'lucide-react';
 import { YearSwitcher } from '@/components/dashboard/YearSwitcher';
 import { SeasonCard } from '@/components/dashboard/SeasonCard';
@@ -24,8 +25,8 @@ const ReportsView = lazy(() => import('@/components/reports/ReportsView').then(m
 import { AppSplash } from '@/components/AppSplash';
 import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { useAvailableYears, useYearSummary } from '@/features/dashboard/useDashboardData';
-import { formatToman } from '@lib/format';
-import { todayJalaliParts, faNum, type Season } from '@lib/jalali';
+import { formatAmount } from '@lib/format';
+import { todayJalaliParts, jalaliSeason, faNum, type Season } from '@lib/jalali';
 import { useLockedYears } from '@/features/settings/useLockedYears';
 import { LockBadge } from '@/components/LockBadge';
 
@@ -35,8 +36,13 @@ export default function HomePage() {
   const { ready, digits } = useAppSettings();
   const { years, currentYear, isLoading: yearsLoading } = useAvailableYears();
 
+  // Current real-world Jalali year and season
+  const todayInfo = useMemo(() => todayJalaliParts(), []);
+  const currentJalaliYear = todayInfo.jy;
+  const currentJalaliSeason = useMemo(() => jalaliSeason(new Date()), []);
+
   // Default to current jalali year if no data exists yet
-  const fallbackYear = useMemo(() => todayJalaliParts().jy, []);
+  const fallbackYear = todayInfo.jy;
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
   // Once years load, default to the most recent year present
@@ -104,6 +110,7 @@ export default function HomePage() {
                 totalCount={summary.seasons[season].totalCount}
                 yearTotal={summary.totalAmount}
                 digits={digits}
+                isCurrentSeason={effectiveYear === currentJalaliYear && season === currentJalaliSeason}
                 onClick={() => setActiveSeason(season)}
               />
             ))}
@@ -185,14 +192,17 @@ function DashboardHeader({
         paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
       }}
     >
-      <div className="flex items-center gap-2">
-        <div
-          className="w-8 h-8 rounded-2xl flex items-center justify-center"
-          style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}
-        >
-          <DropIconSmall />
-        </div>
-        <h1 className="text-lg font-bold text-text">سرچشمه</h1>
+      <div className="flex items-center gap-2.5">
+        <Image
+          src="/icons/icon.webp"
+          alt="ثمر"
+          width={36}
+          height={36}
+          className="w-8 h-8 md:w-9 md:h-9 object-contain shrink-0 select-none"
+          priority
+          referrerPolicy="no-referrer"
+        />
+        <h1 className="text-lg md:text-xl font-bold text-text">ثمر</h1>
       </div>
 
       <div className="flex items-center gap-2">
@@ -246,35 +256,70 @@ function YearTotalCard({
   digits: 'fa' | 'en';
 }) {
   return (
-    <section className="card p-5 md:p-7 lg:p-8">
-      <div className="flex items-start justify-between">
+    <section className="card p-5 md:p-7 lg:p-8 relative overflow-hidden">
+      {/* Ambient Glow Background */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-70 dark:opacity-45 transition-opacity"
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 60% at 90% 25%, rgb(var(--brand-primary) / 0.18) 0%, transparent 70%), radial-gradient(ellipse 55% 55% at 15% 85%, rgb(var(--season-summer) / 0.22) 0%, transparent 65%)',
+        }}
+      />
+
+      <div className="relative z-10 flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <p className="text-xs md:text-sm text-text-muted">جمع درآمد سال</p>
+          <p className="text-xs md:text-sm font-medium text-text-muted">جمع درآمد سال</p>
           {isLoading ? (
             <div className="mt-2 h-9 md:h-12 w-40 md:w-56 rounded-lg animate-pulse" style={{ background: 'rgb(var(--surface-2))' }} />
           ) : (
             <CountUp value={totalAmount} duration={900}>
               {(current) => (
-                <div className="nums digits-font text-3xl md:text-4xl lg:text-5xl font-bold text-text leading-tight mt-1 md:mt-2">
-                  {formatToman(current, digits)}
+                <div className="flex items-baseline flex-wrap gap-x-2 gap-y-0.5 mt-1 md:mt-2">
+                  <span className="nums digits-font text-3xl sm:text-4xl md:text-5xl font-extrabold text-text tracking-tight leading-none">
+                    {formatAmount(current, digits)}
+                  </span>
+                  <span className="text-sm md:text-base lg:text-lg font-normal text-text-muted select-none">
+                    تومان
+                  </span>
                 </div>
               )}
             </CountUp>
           )}
-          <div className="mt-2 md:mt-3 flex items-center gap-1.5">
-            <span className="text-xs md:text-sm text-text-muted">
-              <span className="nums digits-font font-medium text-text">
+          <div className="mt-3 md:mt-4 flex items-center gap-2">
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs md:text-sm font-medium"
+              style={{
+                background: 'rgb(var(--surface-2) / 0.85)',
+                border: '1px solid rgb(var(--text) / 0.08)',
+              }}
+            >
+              <span className="nums digits-font font-bold text-text">
                 {digits === 'fa' ? faNum(totalCount) : totalCount}
-              </span>{' '}
-              تراکنش ثبت شده
+              </span>
+              <span className="text-text-muted text-[11px] md:text-xs">تراکنش ثبت شده</span>
             </span>
           </div>
         </div>
-        <div
-          className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shrink-0"
-          style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}
-        >
-          <DropIconLarge />
+
+        {/* Icon with dark-mode clarity and ambient backglow */}
+        <div className="shrink-0 relative flex items-center justify-center">
+          {/* Subtle glow behind emblem in dark mode */}
+          <div
+            className="absolute inset-0 rounded-full blur-xl pointer-events-none opacity-0 dark:opacity-75"
+            style={{
+              background: 'radial-gradient(circle, rgb(var(--brand-primary) / 0.45) 0%, transparent 70%)',
+              transform: 'scale(1.35)',
+            }}
+          />
+          <Image
+            src="/icons/thamar.webp"
+            alt="ثمر"
+            width={180}
+            height={180}
+            className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain select-none transition-transform duration-300 hover:scale-105 relative z-10 dark:brightness-115 dark:contrast-110 dark:drop-shadow-[0_0_18px_rgba(95,168,143,0.35)]"
+            priority
+            referrerPolicy="no-referrer"
+          />
         </div>
       </div>
     </section>
@@ -285,11 +330,17 @@ function LoadingScreen() {
   return (
     <main className="min-h-safe flex items-center justify-center p-6">
       <div className="card max-w-md w-full p-6 text-center">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-3xl mb-3 animate-pulse"
-             style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}>
-          <DropIconLarge />
+        <div className="inline-flex items-center justify-center mb-3">
+          <Image
+            src="/icons/icon.webp"
+            alt="ثمر"
+            width={64}
+            height={64}
+            className="w-16 h-16 object-contain"
+            referrerPolicy="no-referrer"
+          />
         </div>
-        <h1 className="text-lg font-bold text-text mb-1">سرچشمه</h1>
+        <h1 className="text-lg font-bold text-text mb-1">ثمر</h1>
         <p className="text-sm text-text-muted">در حال بارگذاری…</p>
       </div>
     </main>

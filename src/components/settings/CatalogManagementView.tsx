@@ -2,7 +2,7 @@
 import { faNum } from '@lib/jalali';
 
 /* =========================================================================
-   سرچشمه — CatalogManagementView
+   ثمر — CatalogManagementView
    =========================================================================
    Full-screen view for managing categories and destinations.
    - Tabs: دسته‌ها / مقصدها

@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — BottomSheet
+   ثمر — BottomSheet
    =========================================================================
    A reusable bottom sheet for mobile-style interactions.
    PRD §6 page 2 (Transaction Form):

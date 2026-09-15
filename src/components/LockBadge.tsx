@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — LockBadge
+   ثمر — LockBadge
    =========================================================================
    Shows a compact lock indicator when a year is locked.
    - In the dashboard header (tight space): icon only on mobile,

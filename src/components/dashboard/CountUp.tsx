@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — CountUp
+   ثمر — CountUp
    =========================================================================
    Animates a number from 0 (or previous value) to `value` over `duration`
    milliseconds. Uses requestAnimationFrame with an easeOutExpo curve so

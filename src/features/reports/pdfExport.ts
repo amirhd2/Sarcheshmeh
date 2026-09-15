@@ -86,7 +86,7 @@ export function generatePDFReport(data: PDFReportData): void {
 <body>
   <div class="header">
     <h1>گزارش درآمد سال ${num(year)}</h1>
-    <div class="meta">سرچشمه — دفترچه‌ی درآمد شخصی<br>تاریخ گزارش: ${today}</div>
+    <div class="meta">ثمر — دفترچه‌ی درآمد شخصی<br>تاریخ گزارش: ${today}</div>
   </div>
   <div class="section">
     <h2>خلاصه</h2>
@@ -125,7 +125,7 @@ export function generatePDFReport(data: PDFReportData): void {
       </tbody>
     </table>
   </div>
-  <div class="footer">این گزارش توسط اپلیکیشن سرچشمه تولید شده است.</div>
+  <div class="footer">این گزارش توسط اپلیکیشن ثمر تولید شده است.</div>
   <script>
     window.onload = function() {
       window.print();

@@ -1,24 +1,32 @@
 /* =========================================================================
-   سرچشمه — Service Worker (v2 — network-first for HTML, cache-first for assets)
+   ثمر — Service Worker (v3 — network-first for HTML, cache-first for assets)
    =========================================================================
-   v2 fixes the "stale UI" problem:
+   v3 fixes the "stale UI" problem:
    - Navigation requests (HTML pages) → network-first, fall back to cache
      so users always get the latest UI on refresh, but can still use the
      app offline.
    - Static assets (JS chunks, CSS, fonts, icons) → cache-first (they have
      hashed filenames so they're safe to cache forever).
-   - Bumping CACHE_NAME to v2 automatically invalidates the old v1 cache.
+   - Bumping CACHE_NAME to v3 automatically invalidates the old v2 cache.
    ========================================================================= */
 
-const CACHE_NAME = 'sarcheshmeh-v2';
+const CACHE_NAME = 'thamar-v4';
 const PRECACHE_URLS = [
   '/',
   '/manifest.webmanifest',
-  '/favicon.svg',
-  '/favicon-32.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/apple-touch-icon-180.png',
+  '/favicon.ico',
+  '/icons/favicon-16x16.png',
+  '/icons/favicon-32x32.png',
+  '/icons/favicon.ico',
+  '/icons/android-chrome-192x192.png',
+  '/icons/android-chrome-512x512.png',
+  '/icons/apple-touch-icon.png',
+  '/icons/icon.webp',
+  '/icons/thamar.webp',
+  '/icons/spring.webp',
+  '/icons/summer.webp',
+  '/icons/autumn.webp',
+  '/icons/winter.webp',
   '/fonts/Vazirmatn-Light.woff2',
   '/fonts/Vazirmatn-Regular.woff2',
   '/fonts/Vazirmatn-Medium.woff2',

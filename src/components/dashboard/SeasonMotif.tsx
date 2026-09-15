@@ -1,5 +1,5 @@
 /* =========================================================================
-   سرچشمه — SeasonMotif
+   ثمر — SeasonMotif
    =========================================================================
    PRD §5 season cards: each season has a faint linear SVG motif rendered
    in the corner of its card. The motif is a single-color stroke drawing

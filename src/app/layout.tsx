@@ -20,25 +20,41 @@ const vazirmatn = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'سرچشمه',
+  title: 'ثمر',
   description: 'دفترچه‌ی درآمد شخصی — آفلاین‌اول، شمسی',
-  applicationName: 'سرچشمه',
-  authors: [{ name: 'سرچشمه' }],
+  applicationName: 'ثمر',
+  authors: [{ name: 'ثمر' }],
   keywords: ['درآمد', 'شمسی', 'جلالی', 'بودجه', 'finance'],
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon.ico', sizes: 'any' },
     ],
+    shortcut: '/icons/favicon.ico',
     apple: [
-      { url: '/icons/apple-touch-icon-180.png', sizes: '180x180', type: 'image/png' },
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    other: [
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '192x192',
+        url: '/icons/android-chrome-192x192.png',
+      },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '512x512',
+        url: '/icons/android-chrome-512x512.png',
+      },
     ],
   },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'سرچشمه',
+    title: 'ثمر',
   },
   // Explicit apple-mobile-web-app-capable meta tag — ensures iOS
   // treats this as a full-screen PWA with splash screen support.
@@ -46,7 +62,7 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-capable': 'yes',
   },
   openGraph: {
-    title: 'سرچشمه',
+    title: 'ثمر',
     description: 'دفترچه‌ی درآمد شخصی — آفلاین‌اول، شمسی',
     type: 'website',
     locale: 'fa_IR',
@@ -101,7 +117,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl" data-sarcheshmeh suppressHydrationWarning>
+    <html lang="fa" dir="rtl" data-thamar suppressHydrationWarning>
       <head>
         {/* iOS splash screens — one <link> per device + color scheme */}
         {splashScreens.map((splash) => (

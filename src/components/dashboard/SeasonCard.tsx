@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — SeasonCard
+   ثمر — SeasonCard
    =========================================================================
    PRD §6 page 1 (Dashboard):
    Each season card shows:
@@ -23,7 +23,7 @@
    each season has its own tint + accent pair.
    ========================================================================= */
 
-import { SeasonMotif } from './SeasonMotif';
+import Image from 'next/image';
 import { CountUp } from './CountUp';
 import { formatCompact, formatPercent } from '@lib/format';
 import { SEASONS_FA, SEASON_MONTHS, JALALI_MONTHS_FA, faNum, type Season, type DigitPref } from '@lib/jalali';
@@ -34,8 +34,16 @@ interface SeasonCardProps {
   totalCount: number;
   yearTotal: number; // for computing % of year
   digits: DigitPref;
+  isCurrentSeason?: boolean;
   onClick?: () => void;
 }
+
+const SEASON_IMAGES: Record<Season, string> = {
+  spring: '/icons/spring.webp',
+  summer: '/icons/summer.webp',
+  autumn: '/icons/autumn.webp',
+  winter: '/icons/winter.webp',
+};
 
 /** Season accent colors — match the tint but a bit deeper for contrast. */
 const SEASON_ACCENT_VAR: Record<Season, string> = {
@@ -51,10 +59,11 @@ export function SeasonCard({
   totalCount,
   yearTotal,
   digits,
+  isCurrentSeason = false,
   onClick,
 }: SeasonCardProps) {
   const months = SEASON_MONTHS[season];
-  const monthRange = `${JALALI_MONTHS_FA[months[0] - 1]}–${JALALI_MONTHS_FA[months[2] - 1]}`;
+  const allMonthsText = months.map((m) => JALALI_MONTHS_FA[m - 1]).join(' · ');
   const pctOfYear = yearTotal > 0 ? totalAmount / yearTotal : 0;
   const accent = SEASON_ACCENT_VAR[season];
 
@@ -62,7 +71,11 @@ export function SeasonCard({
     <button
       type="button"
       onClick={onClick}
-      className="card w-full p-4 md:p-6 lg:p-7 text-right pressable relative overflow-hidden"
+      className={`card w-full p-4 md:p-6 lg:p-7 text-right pressable relative overflow-hidden group transition-all duration-200 ${
+        isCurrentSeason
+          ? 'ring-2 ring-emerald-500/40 shadow-sm'
+          : ''
+      }`}
       style={{
         background: 'rgb(var(--surface))',
       }}
@@ -75,42 +88,101 @@ export function SeasonCard({
         }}
       />
 
-      {/* Motif — top-left corner, low opacity. Scales up on larger screens. */}
+      {/* Watermark season image — refined opacity for crisp text readability */}
       <div
-        className="absolute top-0 left-0 w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 pointer-events-none"
-        style={{ color: accent, opacity: 0.18 }}
+        className="absolute left-1 md:left-2 top-1/2 -translate-y-1/2 w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-44 lg:h-44 pointer-events-none select-none z-0 opacity-20 dark:opacity-25 group-hover:opacity-35 dark:group-hover:opacity-40 transition-all duration-300 group-hover:scale-105"
       >
-        <SeasonMotif season={season} className="w-full h-full" />
+        <Image
+          src={SEASON_IMAGES[season]}
+          alt={SEASONS_FA[season]}
+          width={180}
+          height={180}
+          className="w-full h-full object-contain"
+          referrerPolicy="no-referrer"
+        />
       </div>
 
       {/* Content */}
-      <div className="relative">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-base md:text-lg lg:text-xl font-bold text-text">{SEASONS_FA[season]}</h3>
-            <p className="text-xs md:text-sm text-text-muted mt-0.5 md:mt-1">{monthRange}</p>
+      <div className="relative z-10 flex flex-col justify-between h-full">
+        <div>
+          {/* Header row: Season Name + Current Season Badge */}
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h3 className="text-base md:text-lg lg:text-xl font-bold text-text leading-tight">{SEASONS_FA[season]}</h3>
+              <p className="text-xs md:text-sm text-text-muted mt-0.5 md:mt-1 font-medium">{allMonthsText}</p>
+            </div>
+
+            {isCurrentSeason && (
+              <span
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[11px] font-semibold select-none shrink-0"
+                style={{
+                  background: 'rgb(var(--brand-primary) / 0.15)',
+                  color: 'rgb(var(--brand-primary))',
+                  border: '1px solid rgb(var(--brand-primary) / 0.25)',
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'rgb(var(--brand-primary))' }} />
+                فصل جاری
+              </span>
+            )}
+          </div>
+
+          {/* Amount */}
+          <div className="mt-5 md:mt-7 lg:mt-8">
+            <CountUp value={totalAmount} duration={800}>
+              {(current) => (
+                <div className="nums digits-font text-2xl md:text-3xl lg:text-4xl font-extrabold text-text leading-none">
+                  {formatCompact(current, digits)}
+                </div>
+              )}
+            </CountUp>
+
+            {/* Badges / Pills row */}
+            <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mt-2.5 md:mt-3.5">
+              {/* % of year pill */}
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+                style={{
+                  background: 'rgb(var(--surface-2) / 0.85)',
+                  border: '1px solid rgb(var(--text) / 0.08)',
+                }}
+              >
+                <span className="nums digits-font font-bold" style={{ color: accent }}>
+                  {formatPercent(pctOfYear, digits)}
+                </span>
+                <span className="text-text-muted text-[11px]">از کل سال</span>
+              </span>
+
+              {/* Transaction count pill */}
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-text-muted"
+                style={{
+                  background: 'rgb(var(--surface-2) / 0.85)',
+                  border: '1px solid rgb(var(--text) / 0.08)',
+                }}
+              >
+                <span className="nums digits-font font-bold text-text">
+                  {digits === 'fa' ? faNum(totalCount) : totalCount}
+                </span>
+                <span className="text-[11px]">تراکنش</span>
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 md:mt-8 lg:mt-10">
-          <CountUp value={totalAmount} duration={800}>
-            {(current) => (
-              <div className="nums digits-font text-2xl md:text-3xl lg:text-4xl font-bold text-text leading-none">
-                {formatCompact(current, digits)}
-              </div>
-            )}
-          </CountUp>
-          <div className="flex items-center gap-2 mt-2 md:mt-3">
-            <span className="text-xs md:text-sm text-text-muted">
-              <span className="nums digits-font font-medium text-text">
-                {digits === 'fa' ? faNum(totalCount) : totalCount}
-              </span>{' '}
-              تراکنش
-            </span>
-            <span className="text-text-faint">·</span>
-            <span className="nums digits-font text-xs md:text-sm font-medium" style={{ color: accent }}>
-              {formatPercent(pctOfYear, digits)}
-            </span>
+        {/* Minimal Progress / Distribution Bar */}
+        <div className="w-full mt-4 md:mt-5 pt-1">
+          <div
+            className="w-full h-1.5 rounded-full overflow-hidden"
+            style={{ background: 'rgb(var(--text) / 0.08)' }}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{
+                width: `${Math.min(100, Math.max(pctOfYear > 0 ? 3 : 0, pctOfYear * 100))}%`,
+                backgroundColor: accent,
+              }}
+            />
           </div>
         </div>
       </div>

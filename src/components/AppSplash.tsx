@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — AppSplash
+   ثمر — AppSplash
    =========================================================================
    An in-app splash screen that shows on first load for a minimum
    duration (~1.5s). The native iOS/Android splash (apple-touch-startup-image)
@@ -14,6 +14,7 @@
    ========================================================================= */
 
 import { AnimatePresence, motion } from 'framer-motion';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 const MIN_SPLASH_DURATION_MS = 1200;
@@ -65,35 +66,27 @@ export function AppSplash({ ready }: { ready: boolean }) {
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col items-center"
           >
-            {/* Drop icon */}
-            <div
-              className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5"
-              style={{ background: 'rgb(var(--brand-primary) / 0.10)' }}
-            >
-              <svg width="44" height="44" viewBox="0 0 32 32" fill="none">
-                <path
-                  d="M16 4C16 4 7 13.5 7 20a9 9 0 0 0 18 0c0-6.5-9-16-9-16Z"
-                  fill="rgb(var(--brand-primary))"
-                  opacity="0.9"
-                />
-                <path
-                  d="M12 19a4 4 0 0 0 4 4"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  opacity="0.5"
-                />
-              </svg>
+            {/* App icon */}
+            <div className="flex items-center justify-center mb-5">
+              <Image
+                src="/icons/icon.webp"
+                alt="ثمر"
+                width={88}
+                height={88}
+                className="w-20 h-20 md:w-24 md:h-24 object-contain select-none"
+                priority
+                referrerPolicy="no-referrer"
+              />
             </div>
 
             {/* App name */}
             <h1 className="text-xl font-bold text-text mb-1">
-              سرچشمه
+              ثمر
             </h1>
 
             {/* Tagline */}
             <p className="text-xs text-text-muted">
-              سرچشمه‌ی درآمدت رو ببین
+              ثمره‌ی تلاشت رو ببین
             </p>
           </motion.div>
 

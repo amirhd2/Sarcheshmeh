@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — SeasonView
+   ثمر — SeasonView
    =========================================================================
    PRD §6 page 3 (Season Page) + §7 (edge swipe back).
    ========================================================================= */
@@ -22,7 +22,7 @@ import { useAppSettings } from '@/features/dashboard/AppSettingsContext';
 import { BottomSheet } from '@/components/BottomSheet';
 import { TransactionForm } from '@/features/transaction-form/TransactionForm';
 import type { Transaction } from '@/db/schema';
-import { SEASONS_FA, SEASON_MONTHS, JALALI_MONTHS_FA, jalaliMonth, faNum, type Season, type DigitPref } from '@lib/jalali';
+import { SEASONS_FA, SEASON_MONTHS, JALALI_MONTHS_FA, jalaliMonth, todayJalaliParts, faNum, type Season, type DigitPref } from '@lib/jalali';
 import { formatToman } from '@lib/format';
 
 const SEASON_HEADER_COLORS: Record<Season, { light: string; dark: string }> = {
@@ -44,6 +44,9 @@ export function SeasonView({ year, season, onBack }: SeasonViewProps) {
   const destinations = useDestinations() ?? [];
   const { transactions, isLoading } = useSeasonTransactions(year, season);
   const { months } = useMonthSummaries(year, season);
+
+  const currentJalali = useMemo(() => todayJalaliParts(), []);
+  const seasonTotal = useMemo(() => months.reduce((acc, m) => acc + m.totalAmount, 0), [months]);
 
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -166,13 +169,36 @@ export function SeasonView({ year, season, onBack }: SeasonViewProps) {
 
       {/* Content */}
       <div className="px-4 py-4 space-y-4 max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto pb-24">
-        {/* Month cards */}
-        <div className="flex gap-2 md:gap-3">
-          {months.map((m) => (
-            <MonthCard key={m.month} month={m.month} totalAmount={m.totalAmount} totalCount={m.totalCount} digits={digits}
-              isActive={selectedMonth === m.month}
-              onTap={() => setSelectedMonth((prev) => (prev === m.month ? null : m.month))} />
-          ))}
+        {/* Month selector cards */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-semibold text-text-muted">انتخاب و تفکیک بر اساس ماه</span>
+            {selectedMonth !== null && (
+              <button
+                type="button"
+                onClick={() => setSelectedMonth(null)}
+                className="text-xs font-medium text-brand-primary pressable hover:underline"
+              >
+                نمایش کل فصل
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-2 md:gap-3">
+            {months.map((m) => (
+              <MonthCard
+                key={m.month}
+                month={m.month}
+                season={season}
+                totalAmount={m.totalAmount}
+                totalCount={m.totalCount}
+                seasonTotal={seasonTotal}
+                digits={digits}
+                isActive={selectedMonth === m.month}
+                isCurrentMonth={currentJalali.jy === year && currentJalali.jm === m.month}
+                onTap={() => setSelectedMonth((prev) => (prev === m.month ? null : m.month))}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Category filters */}

@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — ColorPicker
+   ثمر — ColorPicker
    =========================================================================
    A palette of calm, muted colors + a custom color input.
    Used in the catalog (category/destination) add/edit form.

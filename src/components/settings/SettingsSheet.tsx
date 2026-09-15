@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — SettingsSheet (v2)
+   ثمر — SettingsSheet (v2)
    =========================================================================
    PRD §6 page 5 (Settings) — accordion-style settings panel.
    User feedback:
@@ -328,7 +328,7 @@ export function SettingsSheet({ open, onClose }: SettingsSheetProps) {
                 <span className="text-sm font-medium text-text">تومان</span>
               </div>
               <div className="pt-2 border-t" style={{ borderColor: 'rgb(var(--text) / 0.08)' }}>
-                <p className="text-xs text-text-faint">سرچشمه — دفترچه‌ی درآمد شخصی، آفلاین‌اول</p>
+                <p className="text-xs text-text-faint">ثمر — دفترچه‌ی درآمد شخصی، آفلاین‌اول</p>
               </div>
             </div>
           </AccordionItem>

@@ -1,7 +1,7 @@
 'use client';
 
 /* =========================================================================
-   سرچشمه — JalaliDatePicker
+   ثمر — JalaliDatePicker
    =========================================================================
    Three-column wheel picker for selecting a Jalali date:
    Year | Month | Day

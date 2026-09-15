@@ -81,7 +81,7 @@ export interface Settings {
 
 /** Shape of a backup export (PRD §3 Backup). */
 export interface BackupFile {
-  app: 'sarcheshmeh';
+  app: 'thamar';
   schemaVersion: number;
   exportedAt: string; // ISO timestamp
   data: {
@@ -96,7 +96,7 @@ export interface BackupFile {
    Dexie database
    ------------------------------------------------------------------------- */
 
-export class SarcheshmehDB extends Dexie {
+export class ThamarDB extends Dexie {
   transactions!: Table<Transaction, string>;
   categories!: Table<Category, string>;
   destinations!: Table<Destination, string>;
@@ -111,7 +111,7 @@ export class SarcheshmehDB extends Dexie {
     } catch {
       options = { indexedDB: fakeIndexedDB as unknown as IDBFactory, IDBKeyRange: fakeIDBKeyRange };
     }
-    super('sarcheshmeh', options);
+    super('thamar', options);
 
     // Schema v1 — initial release.
     // Compound-friendly indexes chosen so the common UI queries
@@ -127,7 +127,7 @@ export class SarcheshmehDB extends Dexie {
   }
 }
 
-export const db = new SarcheshmehDB();
+export const db = new ThamarDB();
 
 /* -------------------------------------------------------------------------
    Schema version constant — used by backup/restore + future migrations

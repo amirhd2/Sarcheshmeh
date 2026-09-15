@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 
 /* =========================================================================
-   سرچشمه — Self-hosted Vazirmatn font (offline-ready)
+   ثمر — Self-hosted Vazirmatn font (offline-ready)
    =========================================================================
    Loaded from /public/fonts/ instead of Google Fonts CDN.
    This ensures the app works completely offline.
@@ -48,7 +48,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* =========================================================================
-   سرچشمه — Theme tokens (PRD §5)
+   ثمر — Theme tokens (PRD §5)
    =========================================================================
    We keep shadcn's oklch tokens for compatibility with its components,
    but add our own brand tokens as CSS variables for the app's UI.
@@ -96,7 +96,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* سرچشمه brand tokens — exposed to Tailwind as utility colors */
+  /* ثمر brand tokens — exposed to Tailwind as utility colors */
   --color-bg: rgb(var(--bg) / <alpha-value>);
   --color-surface: rgb(var(--surface) / <alpha-value>);
   --color-surface-2: rgb(var(--surface-2) / <alpha-value>);
@@ -152,7 +152,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* -------------------------------------------------------------------------
-     سرچشمه — Light theme brand tokens (PRD §5)
+     ثمر — Light theme brand tokens (PRD §5)
      bg #F4F2EF · surface #FFFFFF · text #1A1D1F · primary #3E7C6B
      ------------------------------------------------------------------------- */
   --bg:            244 242 239;
@@ -215,7 +215,7 @@
   --sidebar-ring: oklch(0.556 0 0);
 
   /* -------------------------------------------------------------------------
-     سرچشمه — Dark theme brand tokens (PRD §5)
+     ثمر — Dark theme brand tokens (PRD §5)
      bg #141619 · surface #1D2023 · text #ECEDEE · primary #5FA88F
      ------------------------------------------------------------------------- */
   --bg:            20 22 25;
@@ -255,11 +255,11 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* سرچشمه: warm cream background overrides shadcn's neutral white.
-       We do this only when [data-sarcheshmeh] is set on <html>, so
+    /* ثمر: warm cream background overrides shadcn's neutral white.
+       We do this only when [data-thamar] is set on <html>, so
        shadcn's own pages stay untouched. */
   }
-  html[data-sarcheshmeh] body {
+  html[data-thamar] body {
     background: rgb(var(--bg));
     color: rgb(var(--text));
     font-family: var(--font-vazirmatn), system-ui, sans-serif;
@@ -274,12 +274,12 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  html[data-sarcheshmeh] input,
-  html[data-sarcheshmeh] textarea,
-  html[data-sarcheshmeh] select {
+  html[data-thamar] input,
+  html[data-thamar] textarea,
+  html[data-thamar] select {
     font-size: 16px; /* prevent iOS auto-zoom */
   }
-  html[data-sarcheshmeh] button {
+  html[data-thamar] button {
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
@@ -290,10 +290,10 @@
     cursor: pointer;
     touch-action: manipulation;
   }
-  html[data-sarcheshmeh] :focus:not(:focus-visible) {
+  html[data-thamar] :focus:not(:focus-visible) {
     outline: none;
   }
-  html[data-sarcheshmeh] :focus-visible {
+  html[data-thamar] :focus-visible {
     outline: 2px solid rgb(var(--brand-primary));
     outline-offset: 2px;
     border-radius: 4px;
@@ -301,10 +301,10 @@
 }
 
 /* -------------------------------------------------------------------------
-   Components — سرچشمه card primitive (PRD §5 card separation recipe)
+   Components — ثمر card primitive (PRD §5 card separation recipe)
    ------------------------------------------------------------------------- */
 @layer components {
-  html[data-sarcheshmeh] .card {
+  html[data-thamar] .card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     box-shadow: var(--card-shadow);
@@ -312,7 +312,7 @@
     position: relative;
     overflow: hidden;
   }
-  html[data-sarcheshmeh] .card::before {
+  html[data-thamar] .card::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -320,20 +320,20 @@
     background: var(--card-highlight);
     border-radius: inherit;
   }
-  html[data-sarcheshmeh] .card > * {
+  html[data-thamar] .card > * {
     position: relative;
   }
-  html[data-sarcheshmeh] .pressable {
+  html[data-thamar] .pressable {
     transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  html[data-sarcheshmeh] .pressable:active {
+  html[data-thamar] .pressable:active {
     transform: scale(0.98);
   }
-  html[data-sarcheshmeh] .nums {
+  html[data-thamar] .nums {
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum' on;
   }
-  html[data-sarcheshmeh] .digits-font {
+  html[data-thamar] .digits-font {
     font-family: var(--font-digits);
     font-variant-numeric: tabular-nums;
   }

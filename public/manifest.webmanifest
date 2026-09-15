@@ -1,6 +1,6 @@
 {
-  "name": "سرچشمه — دفترچه‌ی درآمد شخصی",
-  "short_name": "سرچشمه",
+  "name": "ثمر — دفترچه‌ی درآمد شخصی",
+  "short_name": "ثمر",
   "description": "دفترچه‌ی درآمد شخصی — آفلاین‌اول، شمسی",
   "dir": "rtl",
   "lang": "fa",
@@ -12,25 +12,31 @@
   "categories": ["finance", "productivity"],
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/maskable-192.png",
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/maskable-512.png",
+      "src": "/icons/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

@@ -1,4 +1,4 @@
-# سرچشمه 🌊
+# ثمر 🌿
 
 > دفترچه‌ی درآمد شخصی — آفلاین‌اول، شمسی
 
@@ -42,7 +42,7 @@
 1. وارد سایت [Vercel](https://vercel.com) شوید و با اکانت GitHub خود ثبت‌نام / لاگین کنید.
 2. روی دکمه **"Add New..."** و سپس **"Project"** کلیک کنید.
 3. مخزن (Repository) این برنامه را انتخاب کرده و روی **"Import"** کلیک کنید.
-4. بدون نیاز به تغییر تنظیمات، دکمه **"Deploy"** را بزنید. در عرض ۱ دقیقه برنامه بیلد شده و آدرس عمومی آن (مانند `https://sarcheshmeh.vercel.app`) آماده استفاده خواهد بود. با هر بار Push جدید به گیت‌هاب، برنامه به طور خودکار آپدیت می‌شود!
+4. بدون نیاز به تغییر تنظیمات، دکمه **"Deploy"** را بزنید. در عرض ۱ دقیقه برنامه بیلد شده و آدرس عمومی آن (مانند `https://thamar.vercel.app`) آماده استفاده خواهد بود. با هر بار Push جدید به گیت‌هاب، برنامه به طور خودکار آپدیت می‌شود!
 
 ---
 
@@ -69,8 +69,8 @@
 #### مراحل اجرا:
 ```bash
 # ۱. کلون کردن مخزن از گیت‌هاب
-git clone https://github.com/amirhd2/Sarcheshmeh.git
-cd Sarcheshmeh
+git clone https://github.com/amirhd2/Thamar.git
+cd Thamar
 
 # ۲. نصب پکیج‌ها و وابستگی‌ها
 npm install
@@ -97,8 +97,8 @@ npm run dev
 docker compose up -d
 
 # یا با دستور مستقیم Docker:
-docker build -t sarcheshmeh .
-docker run -p 3000:3000 sarcheshmeh
+docker build -t thamar .
+docker run -p 3000:3000 thamar
 ```
 برنامه روی پورت ۳۰۰۰ در دسترس است.
 
