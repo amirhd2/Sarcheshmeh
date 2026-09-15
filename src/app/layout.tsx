@@ -128,24 +128,16 @@ export default function RootLayout({
             media={splash.media}
           />
         ))}
-        {/* Service Worker registration — enables full offline support in production, unregisters in dev */}
+        {/* Service Worker registration — enables full offline support and PWA caching */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                if (window.location.hostname !== 'localhost' && !window.location.hostname.includes('ais-dev-')) {
-                  window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js').catch(function(e) {
-                      console.warn('SW registration failed:', e);
-                    });
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function(e) {
+                    console.warn('SW registration info:', e);
                   });
-                } else {
-                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    for (var r of registrations) {
-                      r.unregister();
-                    }
-                  });
-                }
+                });
               }
             `,
           }}

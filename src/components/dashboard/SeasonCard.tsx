@@ -107,14 +107,14 @@ export function SeasonCard({
         <div>
           {/* Header row: Season Name + Current Season Badge */}
           <div className="flex items-start justify-between gap-2">
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base md:text-lg lg:text-xl font-bold text-text leading-tight">{SEASONS_FA[season]}</h3>
-              <p className="text-xs md:text-sm text-text-muted mt-0.5 md:mt-1 font-medium">{allMonthsText}</p>
+              <p className="text-xs md:text-sm text-text-muted mt-0.5 md:mt-1 font-medium whitespace-nowrap">{allMonthsText}</p>
             </div>
 
             {isCurrentSeason && (
               <span
-                className="inline-flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[11px] font-semibold select-none shrink-0"
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[11px] font-semibold select-none shrink-0 whitespace-nowrap"
                 style={{
                   background: 'rgb(var(--brand-primary) / 0.15)',
                   color: 'rgb(var(--brand-primary))',

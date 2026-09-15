@@ -58,6 +58,7 @@ import {
   todayJalaliParts,
   jalaliToISO,
   jalaliYear,
+  formatJalali,
   formatJalaliLong,
   toPersianDigits,
 } from '@lib/jalali';
@@ -229,67 +230,77 @@ export function TransactionForm({
           </div>
         </div>
 
-        {/* Date chips + AC button (clear amount) — PRD user feedback #3
-            AC is now a pill-shaped button (larger, easier to tap, but
-            still subtle enough to not dominate the chip row).
-            The row has a FIXED min-height so AC appearing/disappearing
-            doesn't cause a vertical jump (PRD user feedback this iteration). */}
-        <div className="px-4 pb-3 flex gap-2 items-center flex-wrap min-h-[48px]">
-          <DateChip
-            active={dateISO === todayISO && !showDatePicker}
-            onClick={() => {
-              setDateISO(todayISO);
-              setShowDatePicker(false);
-            }}
-          >
-            امروز
-          </DateChip>
-          <DateChip
-            active={dateISO === yesterdayISO && !showDatePicker}
-            onClick={() => {
-              setDateISO(yesterdayISO);
-              setShowDatePicker(false);
-            }}
-          >
-            دیروز
-          </DateChip>
-          <DateChip
-            active={showDatePicker || (dateISO !== todayISO && dateISO !== yesterdayISO)}
-            onClick={() => setShowDatePicker((v) => !v)}
-          >
-            <Calendar size={14} strokeWidth={2.5} />
-            <span className="mr-1">
-              {showDatePicker
-                ? 'ورود مبلغ'
-                : dateISO !== todayISO && dateISO !== yesterdayISO
-                  ? formatJalaliLong(dateISO, digits)
-                  : 'انتخاب تاریخ'}
-            </span>
-          </DateChip>
-
-          {/* AC button — pill shape with text + icon. Larger than the
-              chips so it's easy to tap, but tinted danger so it doesn't
-              compete visually with the primary actions. Only shown when
-              there's an amount to clear. */}
-          {amountRaw !== '' && (
-            <motion.button
-              type="button"
-              onClick={() => setAmountRaw('')}
-              initial={{ opacity: 0, scale: 0.85, x: 8 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.85, x: 8 }}
-              whileTap={{ scale: 0.94 }}
-              aria-label="پاک کردن مبلغ"
-              className="flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-medium mr-auto pressable"
-              style={{
-                background: 'rgb(var(--danger) / 0.12)',
-                color: 'rgb(var(--danger))',
+        {/* Date chips + Selected date badge + AC button */}
+        <div className="px-4 pb-3 flex items-center justify-between gap-2 flex-wrap min-h-[48px]">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <DateChip
+              active={dateISO === todayISO && !showDatePicker}
+              onClick={() => {
+                setDateISO(todayISO);
+                setShowDatePicker(false);
               }}
             >
-              <Eraser size={14} strokeWidth={2.5} />
-              <span>پاک کردن</span>
-            </motion.button>
-          )}
+              امروز
+            </DateChip>
+            <DateChip
+              active={dateISO === yesterdayISO && !showDatePicker}
+              onClick={() => {
+                setDateISO(yesterdayISO);
+                setShowDatePicker(false);
+              }}
+            >
+              دیروز
+            </DateChip>
+            <DateChip
+              active={showDatePicker || (dateISO !== todayISO && dateISO !== yesterdayISO)}
+              onClick={() => setShowDatePicker((v) => !v)}
+            >
+              <Calendar size={13} strokeWidth={2.5} />
+              <span className="mr-1">
+                {showDatePicker ? 'ورود مبلغ' : 'انتخاب تاریخ'}
+              </span>
+            </DateChip>
+          </div>
+
+          {/* Left side: Selected Date Display Badge + AC button */}
+          <div className="flex items-center gap-1.5 mr-auto">
+            {/* Elegant selected date badge */}
+            <div
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold select-none shadow-2xs transition-all"
+              style={{
+                background: 'rgb(var(--surface-2))',
+                color: 'rgb(var(--text))',
+                border: '1px solid rgb(var(--brand-primary) / 0.25)',
+              }}
+              title="تاریخ انتخاب شده"
+            >
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'rgb(var(--brand-primary))' }} />
+              <span className="nums digits-font tracking-wide font-bold" style={{ color: 'rgb(var(--brand-primary))' }}>
+                {formatJalali(dateISO, 'YYYY/MM/DD', digits)}
+              </span>
+            </div>
+
+            {/* AC button — pill shape with text + icon */}
+            {amountRaw !== '' && (
+              <motion.button
+                type="button"
+                onClick={() => setAmountRaw('')}
+                initial={{ opacity: 0, scale: 0.85, x: 8 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.85, x: 8 }}
+                whileTap={{ scale: 0.94 }}
+                aria-label="پاک کردن مبلغ"
+                className="flex items-center gap-1 px-2.5 h-7 sm:h-8 rounded-full text-xs font-medium pressable"
+                style={{
+                  background: 'rgb(var(--danger) / 0.12)',
+                  color: 'rgb(var(--danger))',
+                }}
+              >
+                <Eraser size={13} strokeWidth={2.5} />
+                <span>پاک کردن</span>
+              </motion.button>
+            )}
+          </div>
         </div>
 
         {/* Swap zone: number pad OR date picker, never both at once.
