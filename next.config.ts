@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   output: isGithubPages ? "export" : "standalone",
   basePath: basePath || undefined,
   assetPrefix: basePath ? `${basePath}/` : undefined,
+  env: {
+    NEXT_PUBLIC_BASE_PATH: basePath || "",
+  },
   images: {
     unoptimized: true,
   },

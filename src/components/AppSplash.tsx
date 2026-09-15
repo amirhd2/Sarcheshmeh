@@ -69,7 +69,7 @@ export function AppSplash({ ready }: { ready: boolean }) {
             {/* App icon */}
             <div className="flex items-center justify-center mb-5">
               <Image
-                src="/icons/icon.png"
+                src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/icons/icon.png`}
                 alt="ثمر"
                 width={88}
                 height={88}

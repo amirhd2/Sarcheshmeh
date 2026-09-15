@@ -194,7 +194,7 @@ function DashboardHeader({
     >
       <div className="flex items-center gap-2.5">
         <Image
-          src="/icons/icon.png"
+          src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/icons/icon.png`}
           alt="ثمر"
           width={36}
           height={36}
@@ -313,7 +313,7 @@ function YearTotalCard({
             }}
           />
           <Image
-            src="/icons/thamar.png"
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/icons/thamar.png`}
             alt="ثمر"
             width={180}
             height={180}
@@ -334,7 +334,7 @@ function LoadingScreen() {
       <div className="card max-w-md w-full p-6 text-center">
         <div className="inline-flex items-center justify-center mb-3">
           <Image
-            src="/icons/icon.png"
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/icons/icon.png`}
             alt="ثمر"
             width={64}
             height={64}

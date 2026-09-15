@@ -8,33 +8,33 @@
    - Pre-caches core app shell, fonts, and icon assets on install.
    ========================================================================= */
 
-const CACHE_NAME = 'thamar-v7';
+const CACHE_NAME = 'thamar-v8';
 
 const PRECACHE_URLS = [
-  '/',
-  '/manifest.webmanifest',
-  '/favicon.ico',
-  '/favicon-32.png',
-  '/icons/favicon-16x16.png',
-  '/icons/favicon-32x32.png',
-  '/icons/android-chrome-192x192.png',
-  '/icons/android-chrome-512x512.png',
-  '/icons/apple-touch-icon.png',
-  '/icons/apple-touch-icon-180.png',
-  '/icons/maskable-192.png',
-  '/icons/maskable-512.png',
-  '/icons/icon.png',
-  '/icons/thamar.png',
-  '/icons/spring.png',
-  '/icons/summer.png',
-  '/icons/autumn.png',
-  '/icons/winter.png',
-  '/fonts/Vazirmatn-Light.woff2',
-  '/fonts/Vazirmatn-Regular.woff2',
-  '/fonts/Vazirmatn-Medium.woff2',
-  '/fonts/Vazirmatn-SemiBold.woff2',
-  '/fonts/Vazirmatn-Bold.woff2',
-  '/fonts/Vazirmatn-ExtraBold.woff2',
+  './',
+  './manifest.webmanifest',
+  './favicon.ico',
+  './favicon-32.png',
+  './icons/favicon-16x16.png',
+  './icons/favicon-32x32.png',
+  './icons/android-chrome-192x192.png',
+  './icons/android-chrome-512x512.png',
+  './icons/apple-touch-icon.png',
+  './icons/apple-touch-icon-180.png',
+  './icons/maskable-192.png',
+  './icons/maskable-512.png',
+  './icons/icon.png',
+  './icons/thamar.png',
+  './icons/spring.png',
+  './icons/summer.png',
+  './icons/autumn.png',
+  './icons/winter.png',
+  './fonts/Vazirmatn-Light.woff2',
+  './fonts/Vazirmatn-Regular.woff2',
+  './fonts/Vazirmatn-Medium.woff2',
+  './fonts/Vazirmatn-SemiBold.woff2',
+  './fonts/Vazirmatn-Bold.woff2',
+  './fonts/Vazirmatn-ExtraBold.woff2',
 ];
 
 // Install — precache core assets
@@ -141,7 +141,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => {
           // If offline and request is an image, try matching any icon fallback
           if (request.destination === 'image') {
-            return caches.match('/icons/icon.png');
+            return caches.match('./icons/icon.png');
           }
           return new Response('', { status: 408, headers: { 'Content-Type': 'text/plain' } });
         });

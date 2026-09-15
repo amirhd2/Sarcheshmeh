@@ -93,7 +93,7 @@ export function SeasonCard({
         className="absolute left-1 md:left-2 top-1/2 -translate-y-1/2 w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-44 lg:h-44 pointer-events-none select-none z-0 opacity-20 dark:opacity-25 group-hover:opacity-35 dark:group-hover:opacity-40 transition-all duration-300 group-hover:scale-105"
       >
         <Image
-          src={SEASON_IMAGES[season]}
+          src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}${SEASON_IMAGES[season]}`}
           alt={SEASONS_FA[season]}
           width={180}
           height={180}

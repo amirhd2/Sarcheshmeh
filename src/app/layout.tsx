@@ -124,7 +124,7 @@ export default function RootLayout({
           <link
             key={splash.url}
             rel="apple-touch-startup-image"
-            href={splash.url}
+            href={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}${splash.url}`}
             media={splash.media}
           />
         ))}
@@ -134,7 +134,8 @@ export default function RootLayout({
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function(e) {
+                  var bp = '${process.env.NEXT_PUBLIC_BASE_PATH || ''}';
+                  navigator.serviceWorker.register(bp + '/sw.js').catch(function(e) {
                     console.warn('SW registration info:', e);
                   });
                 });
