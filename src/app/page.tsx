@@ -200,6 +200,7 @@ function DashboardHeader({
           height={36}
           className="w-8 h-8 md:w-9 md:h-9 object-contain shrink-0 select-none"
           priority
+          unoptimized
           referrerPolicy="no-referrer"
         />
         <h1 className="text-lg md:text-xl font-bold text-text">ثمر</h1>
@@ -318,6 +319,7 @@ function YearTotalCard({
             height={180}
             className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain select-none transition-transform duration-300 hover:scale-105 relative z-10 dark:brightness-115 dark:contrast-110 dark:drop-shadow-[0_0_18px_rgba(95,168,143,0.35)]"
             priority
+            unoptimized
             referrerPolicy="no-referrer"
           />
         </div>
@@ -337,6 +339,7 @@ function LoadingScreen() {
             width={64}
             height={64}
             className="w-16 h-16 object-contain"
+            unoptimized
             referrerPolicy="no-referrer"
           />
         </div>

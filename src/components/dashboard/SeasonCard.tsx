@@ -98,6 +98,7 @@ export function SeasonCard({
           width={180}
           height={180}
           className="w-full h-full object-contain"
+          unoptimized
           referrerPolicy="no-referrer"
         />
       </div>

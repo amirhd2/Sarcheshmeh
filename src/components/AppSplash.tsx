@@ -75,6 +75,7 @@ export function AppSplash({ ready }: { ready: boolean }) {
                 height={88}
                 className="w-20 h-20 md:w-24 md:h-24 object-contain select-none"
                 priority
+                unoptimized
                 referrerPolicy="no-referrer"
               />
             </div>
