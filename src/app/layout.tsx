@@ -19,6 +19,8 @@ const vazirmatn = localFont({
   display: 'swap',
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 export const metadata: Metadata = {
   title: 'ثمر',
   description: 'دفترچه‌ی درآمد شخصی — آفلاین‌اول، شمسی',
@@ -27,30 +29,44 @@ export const metadata: Metadata = {
   keywords: ['درآمد', 'شمسی', 'جلالی', 'بودجه', 'finance'],
   icons: {
     icon: [
-      { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icons/favicon.ico', sizes: 'any' },
+      { url: `${basePath}/icons/favicon-16x16.png`, sizes: '16x16', type: 'image/png' },
+      { url: `${basePath}/icons/favicon-32x32.png`, sizes: '32x32', type: 'image/png' },
+      { url: `${basePath}/favicon-32.png`, sizes: '32x32', type: 'image/png' },
+      { url: `${basePath}/favicon.ico`, sizes: 'any' },
     ],
-    shortcut: '/icons/favicon.ico',
+    shortcut: `${basePath}/favicon.ico`,
     apple: [
-      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: `${basePath}/icons/apple-touch-icon.png`, sizes: '180x180', type: 'image/png' },
+      { url: `${basePath}/apple-touch-icon.png`, sizes: '180x180', type: 'image/png' },
     ],
     other: [
       {
         rel: 'icon',
         type: 'image/png',
         sizes: '192x192',
-        url: '/icons/android-chrome-192x192.png',
+        url: `${basePath}/icons/android-chrome-192x192.png`,
       },
       {
         rel: 'icon',
         type: 'image/png',
         sizes: '512x512',
-        url: '/icons/android-chrome-512x512.png',
+        url: `${basePath}/icons/android-chrome-512x512.png`,
+      },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '192x192',
+        url: `${basePath}/android-chrome-192x192.png`,
+      },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '512x512',
+        url: `${basePath}/android-chrome-512x512.png`,
       },
     ],
   },
-  manifest: '/manifest.webmanifest',
+  manifest: `${basePath}/manifest.webmanifest`,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -119,6 +135,21 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl" data-thamar suppressHydrationWarning>
       <head>
+        {/* Favicons & App Icons with dynamic basePath for GitHub Pages & Custom Domains */}
+        <link rel="icon" type="image/x-icon" href={`${basePath}/favicon.ico`} />
+        <link rel="shortcut icon" href={`${basePath}/favicon.ico`} />
+        <link rel="icon" type="image/png" sizes="16x16" href={`${basePath}/icons/favicon-16x16.png`} />
+        <link rel="icon" type="image/png" sizes="32x32" href={`${basePath}/icons/favicon-32x32.png`} />
+        <link rel="icon" type="image/png" sizes="32x32" href={`${basePath}/favicon-32.png`} />
+        <link rel="icon" type="image/png" sizes="192x192" href={`${basePath}/icons/android-chrome-192x192.png`} />
+        <link rel="icon" type="image/png" sizes="512x512" href={`${basePath}/icons/android-chrome-512x512.png`} />
+        {/* Apple Touch Icons (iOS Safari & Home Screen) */}
+        <link rel="apple-touch-icon" sizes="180x180" href={`${basePath}/icons/apple-touch-icon.png`} />
+        <link rel="apple-touch-icon" sizes="180x180" href={`${basePath}/apple-touch-icon.png`} />
+        <link rel="apple-touch-icon-precomposed" sizes="180x180" href={`${basePath}/apple-touch-icon-precomposed.png`} />
+        {/* PWA Manifest */}
+        <link rel="manifest" href={`${basePath}/manifest.webmanifest`} />
+
         {/* iOS splash screens — one <link> per device + color scheme */}
         {splashScreens.map((splash) => (
           <link

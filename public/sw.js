@@ -8,13 +8,23 @@
    - Pre-caches core app shell, fonts, and icon assets on install.
    ========================================================================= */
 
-const CACHE_NAME = 'thamar-v8';
+const CACHE_NAME = 'thamar-v9';
 
 const PRECACHE_URLS = [
   './',
   './manifest.webmanifest',
   './favicon.ico',
   './favicon-32.png',
+  './favicon-16x16.png',
+  './favicon-32x32.png',
+  './apple-touch-icon.png',
+  './apple-touch-icon-precomposed.png',
+  './android-chrome-192x192.png',
+  './android-chrome-512x512.png',
+  './icon-192.png',
+  './icon-512.png',
+  './maskable-192.png',
+  './maskable-512.png',
   './icons/favicon-16x16.png',
   './icons/favicon-32x32.png',
   './icons/android-chrome-192x192.png',
