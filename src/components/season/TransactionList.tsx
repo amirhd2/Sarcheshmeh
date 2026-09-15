@@ -55,12 +55,11 @@ export function TransactionList({ transactions, categories, destinations, digits
       {groups.map((group, groupIdx) => (
         <motion.div key={group.dateISO} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: Math.min(groupIdx * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}>
-          <div className="flex items-center justify-between px-4 py-2 mx-4 rounded-2xl" style={{ background: 'rgb(var(--surface-2))' }}>
+          <div className="flex items-center px-4 py-2 mx-4 rounded-2xl" style={{ background: 'rgb(var(--surface-2))' }}>
             <div className="flex items-baseline gap-2">
               <span className="text-xs font-medium text-text-muted">{group.weekday}</span>
               <span className="nums digits-font text-xs text-text-faint">{group.dateLabel}</span>
             </div>
-            <span className="nums digits-font text-xs font-bold text-text">{formatAmount(group.total, digits)}</span>
           </div>
           <div className="card mx-4 mt-1 overflow-hidden">
             {group.items.map((tx, idx) => (

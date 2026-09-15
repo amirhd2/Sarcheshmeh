@@ -117,12 +117,12 @@ export function SeasonView({ year, season, onBack }: SeasonViewProps) {
 
   return (
     <div ref={swipeBackRef}
-      className={`season-view-enter fixed inset-0 z-40 overflow-y-auto no-scrollbar${isExiting ? ' is-exiting' : ''}`}
+      className={`season-view-enter fixed inset-0 z-40 ${editingTx !== null ? 'overflow-hidden' : 'overflow-y-auto'} no-scrollbar${isExiting ? ' is-exiting' : ''}`}
       style={{
         background: 'rgb(var(--bg))',
         transform: isExiting ? 'translate3d(100%, 0, 0)' : undefined,
         transition: isExiting ? 'transform 0.3s cubic-bezier(0.4, 0, 1, 1)' : undefined,
-        willChange: 'transform',
+        willChange: isExiting ? 'transform' : undefined,
       }}>
       <style>{`
         @keyframes season-view-enter { from { transform: translate3d(100%, 0, 0); } to { transform: translate3d(0, 0, 0); } }

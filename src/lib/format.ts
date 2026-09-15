@@ -56,6 +56,34 @@ export function formatToman(amount: number, digits: DigitPref = 'fa'): string {
   return `${formatAmount(amount, digits)} تومان`;
 }
 
+export interface CompactAmountParts {
+  value: string;
+  unitShort: string;
+  unitLong: string;
+}
+
+/**
+ * Returns structured compact parts so responsive UI can display
+ * "م" on mobile and "میلیون" on larger screens where space allows.
+ */
+export function formatCompactParts(amount: number, digits: DigitPref = 'fa'): CompactAmountParts {
+  const abs = Math.abs(amount);
+  if (abs >= 1_000_000) {
+    const millions = amount / 1_000_000;
+    const str = millions
+      .toFixed(abs % 1_000_000 === 0 ? 0 : 1)
+      .replace(/\.0$/, '');
+    const num = digits === 'fa' ? toPersianDigits(str) : str;
+    return { value: num, unitShort: 'م', unitLong: 'میلیون' };
+  }
+  if (abs >= 1_000) {
+    const thousands = Math.round(amount / 1_000);
+    const num = digits === 'fa' ? toPersianDigits(String(thousands)) : String(thousands);
+    return { value: num, unitShort: 'هزار', unitLong: 'هزار' };
+  }
+  return { value: formatAmount(amount, digits), unitShort: '', unitLong: '' };
+}
+
 /**
  * Compact form for tight UI (e.g. dashboard chips): converts to million
  * for amounts ≥ 1,000,000.
@@ -64,21 +92,8 @@ export function formatToman(amount: number, digits: DigitPref = 'fa'): string {
  * @example formatCompact(950_000, 'fa')    → "۹۵۰ هزار"
  */
 export function formatCompact(amount: number, digits: DigitPref = 'fa'): string {
-  const abs = Math.abs(amount);
-  if (abs >= 1_000_000) {
-    const millions = amount / 1_000_000;
-    const str = millions
-      .toFixed(abs % 1_000_000 === 0 ? 0 : 1)
-      .replace(/\.0$/, '');
-    const num = digits === 'fa' ? toPersianDigits(str) : str;
-    return `${num} م`;
-  }
-  if (abs >= 1_000) {
-    const thousands = Math.round(amount / 1_000);
-    const num = digits === 'fa' ? toPersianDigits(String(thousands)) : String(thousands);
-    return `${num} هزار`;
-  }
-  return formatAmount(amount, digits);
+  const parts = formatCompactParts(amount, digits);
+  return parts.unitShort ? `${parts.value} ${parts.unitShort}` : parts.value;
 }
 
 /* -------------------------------------------------------------------------
