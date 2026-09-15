@@ -8,7 +8,7 @@
    - Pre-caches core app shell, fonts, and icon assets on install.
    ========================================================================= */
 
-const CACHE_NAME = 'thamar-v6';
+const CACHE_NAME = 'thamar-v7';
 
 const PRECACHE_URLS = [
   '/',
@@ -29,12 +29,6 @@ const PRECACHE_URLS = [
   '/icons/summer.png',
   '/icons/autumn.png',
   '/icons/winter.png',
-  '/icons/icon.webp',
-  '/icons/thamar.webp',
-  '/icons/spring.webp',
-  '/icons/summer.webp',
-  '/icons/autumn.webp',
-  '/icons/winter.webp',
   '/fonts/Vazirmatn-Light.woff2',
   '/fonts/Vazirmatn-Regular.woff2',
   '/fonts/Vazirmatn-Medium.woff2',
@@ -147,7 +141,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => {
           // If offline and request is an image, try matching any icon fallback
           if (request.destination === 'image') {
-            return caches.match('/icons/icon.webp');
+            return caches.match('/icons/icon.png');
           }
           return new Response('', { status: 408, headers: { 'Content-Type': 'text/plain' } });
         });
